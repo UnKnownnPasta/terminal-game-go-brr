@@ -3,8 +3,7 @@ from copy import deepcopy
 from random import randint, randrange
 
 # -----------INITIALIZATION
-# print('\nMove:', '', end='\n')
-STORE_DATA, i, n, l = [], 0, 10, 0
+STORE_DATA, i, n, l = [], 0, 9, 0
 switch = 0
 
 # -----------TERRAIN
@@ -23,14 +22,14 @@ type11 = ['🟩','🟦','🟩','🟦','🟩']
 type12 = ['🥦','🟩','🟦','🟦','🟩']
 
 typeList = [type1]+[type2]+[type6]+[type3]+[type4]+[type5]+[type7]+[type8]+[type9]+[type10]+[type11]+[type12]
-print(typeList)
+
 while i <= 10:
-    for x in 'abcdefghijklmnopqrstuvwzyx1234':
+    for x in '1234567890':#abcdefghijklmnopqrstuvwzyx1234
         randomListFS = randint(0,11)
         baseLineMod[n-1] = ''.join(typeList[randomListFS])
         if n == 0:
-            n=10
-            i+=1
+            n=9
+            i = i + 1
         else:
             n -= 1
     dupeList = tuple(baseLineMod)
@@ -41,8 +40,8 @@ BACKUP_DATA = deepcopy(STORE_DATA)
 
 # -----------MISC
 
-for v in STORE_DATA:
-    print("".join(v))
+# for v in STORE_DATA:
+#     print("".join(v))
 
 
 
