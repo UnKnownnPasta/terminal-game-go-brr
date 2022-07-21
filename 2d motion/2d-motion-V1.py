@@ -34,6 +34,15 @@ while i <= 11:
     dupeList = tuple(baseLineMod)
     STORE_DATA.insert(len(STORE_DATA), list(dupeList))
 
+"""
+what is going on here is that
+when STORE_DATA is created, the list in in form of [[],[],[],[]]
+and .join() ignores that and generates terrain fine
+but modification of indivisual tiles cannot be done
+
+here every [] element's elements are being added to a new [], so a master STORE_DATA in the form of ['', '', '', ...] is made
+"""
+    
 # THEN FIX IT HERE
 BACKUP_DATA = [] # make a second copy of terrain, this is refined
 for x in STORE_DATA:
