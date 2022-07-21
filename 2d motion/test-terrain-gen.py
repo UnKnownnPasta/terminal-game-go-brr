@@ -1,6 +1,8 @@
 baseLineMod = [[],[],[],[],[],[],[],[],[],[]]
 from copy import deepcopy
 from random import randint, randrange
+from re import template
+from turtle import back
 
 # -----------INITIALIZATION
 STORE_DATA, i, n, l = [], 0, 9, 0
@@ -22,29 +24,39 @@ type11 = ['🟩','🟦','🟩','🟦','🟩']
 type12 = ['🥦','🟩','🟦','🟦','🟩']
 
 typeList = [type1]+[type2]+[type6]+[type3]+[type4]+[type5]+[type7]+[type8]+[type9]+[type10]+[type11]+[type12]
+# [[x,y,z], [1,2,3], [yes,maybe,no], [yin,neutral,yang]]
 
-while i <= 10:
+# typeList = []
+# for x in type1, type2, type3, type4, type5, type6, type7, type8, type9, type10, type11, type12:
+#     typeList.insert(len(typeList), x)
+
+while i <= 11:
     for x in '1234567890':#abcdefghijklmnopqrstuvwzyx1234
         randomListFS = randint(0,11)
-        baseLineMod[n-1] = ''.join(typeList[randomListFS])
+        baseLineMod[n-1] = typeList[randomListFS]
         if n == 0:
-            n=9
-            i = i + 1
+            n, i = 9, i+1
         else:
-            n -= 1
+            n-=1
     dupeList = tuple(baseLineMod)
     STORE_DATA.insert(len(STORE_DATA), list(dupeList))
-    print(''.join(dupeList), end='\n')
+    # print(''.join(dupeList), end='\n')
 
-BACKUP_DATA = deepcopy(STORE_DATA)
+BACKUP_DATA = []
+for x in STORE_DATA:
+    tempList = []
+    for y in x:
+        tempList = y + tempList
+    BACKUP_DATA.insert(len(BACKUP_DATA), tempList)
+    tempList = []
+
+STORE_DATA = deepcopy(BACKUP_DATA)
+
+for v in BACKUP_DATA:
+    print(''.join(v))
 
 # -----------MISC
-
-# for v in STORE_DATA:
-#     print("".join(v))
-
-
-
+# print(len(BACKUP_DATA))
 
 # -----------DUMP
 '''
