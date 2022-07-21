@@ -1,10 +1,12 @@
 this is a 2d plane, x and y-axis.  
   
 character can move in:  
-  w -> down
-  s -> up
+  w -> up
+  s -> down
   a -> left
   d -> right
   
 movement is finalized  
-terrain in work.
+terrain in finalized.
+
+version 1 is out
