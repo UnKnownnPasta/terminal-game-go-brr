@@ -76,21 +76,21 @@ while 1 < 2:
 
     # FORWARD
     if c == 'w':
-        if STORE_DATA[11][lrS_d] == '👨':
-            STORE_DATA[11][lrS_d] = BACKUP_DATA[11][lrS_d]
-            STORE_DATA[0][lrS_d] = '👨'
-        else:
-            STORE_DATA[indS_D][lrS_d] = BACKUP_DATA[indS_D][lrS_d]
-            STORE_DATA[indS_D+1][lrS_d] = '👨'
-    
-    # BACKWARD
-    if c == 's':
         if STORE_DATA[0][lrS_d] == '👨':
             STORE_DATA[0][lrS_d] = BACKUP_DATA[0][lrS_d]
             STORE_DATA[11][lrS_d] = '👨'
         else:
             STORE_DATA[indS_D][lrS_d] = BACKUP_DATA[indS_D][lrS_d]
             STORE_DATA[indS_D-1][lrS_d] = '👨'
+    
+    # BACKWARD
+    if c == 's':
+        if STORE_DATA[11][lrS_d] == '👨':
+            STORE_DATA[11][lrS_d] = BACKUP_DATA[11][lrS_d]
+            STORE_DATA[0][lrS_d] = '👨'
+        else:
+            STORE_DATA[indS_D][lrS_d] = BACKUP_DATA[indS_D][lrS_d]
+            STORE_DATA[indS_D+1][lrS_d] = '👨'
 
     # RIGHTWARDS
     if c == 'd':
