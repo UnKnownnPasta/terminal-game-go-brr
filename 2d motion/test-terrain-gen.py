@@ -1,16 +1,54 @@
-baseLineMod = [[],[],[],[],[]]
+baseLineMod = [[],[],[],[],[],[],[],[],[],[]]
 from copy import deepcopy
 from random import randint, randrange
 
 # -----------INITIALIZATION
 # print('\nMove:', '', end='\n')
-STORE_DATA, i, n, l = [], 0, 6, 0
+STORE_DATA, i, n, l = [], 0, 10, 0
 switch = 0
 
 # -----------TERRAIN
-squares = [['🟩','🟩','🟩','🟩','🟩'],['🟩','🟩','🟩','🟩','🟩'],['🟩','🟫','🟫','🟫','🟩'],['🟩','🟩','🟩','🟩','🟩'],['🟩','🟫','🟫','🟫','🟩'],['🟩','🟩','🟩','🟩','🟩']]
-empty = [['🟩','🟩','🟩','🟩','🟩'],['🟦','🟦','🟦','🟦','🟦'],['🟩','🟩','🟩','🟩','🟩'],['🟩','🟦','🟦','🟩','🟩'],['🟩','🟩','🟩','🟩','🟩'],['🟩','🟩','🟩','🟩','🟩',]]
+type1 = ['🟩','🟩','🟩','🟩','🟩']
+type2 = ['🟩','🥦','🟦','🟩','🟩']
+type3 = ['🟩','🟧','🟧','🟩','🟩']
+type4 = ['🟦','🟦','🟦','🟦','🟦']
+type5 = ['🥦','🟩','🟦','🟦','🟩']
+type5 = ['🟧','🟩','🟩','🟦','🟦']
+type6 = ['🟩','🥦','🟦','🟩','🟩']
+type7 = ['🟩','🟩','🟩','🟩','🟩']
+type10 = ['🟩','🟦','🟩','🥦','🟩']
+type8 = ['🟩','🟦','🟦','🥦','🟩']
+type9 = ['🟩','🟧','🟧','🟩','🟩']
+type11 = ['🟩','🟦','🟩','🟦','🟩']
+type12 = ['🥦','🟩','🟦','🟦','🟩']
 
+typeList = [type1]+[type2]+[type6]+[type3]+[type4]+[type5]+[type7]+[type8]+[type9]+[type10]+[type11]+[type12]
+print(typeList)
+while i <= 10:
+    for x in 'abcdefghijklmnopqrstuvwzyx1234':
+        randomListFS = randint(0,11)
+        baseLineMod[n-1] = ''.join(typeList[randomListFS])
+        if n == 0:
+            n=10
+            i+=1
+        else:
+            n -= 1
+    dupeList = tuple(baseLineMod)
+    STORE_DATA.insert(len(STORE_DATA), list(dupeList))
+    print(''.join(dupeList), end='\n')
+
+BACKUP_DATA = deepcopy(STORE_DATA)
+
+# -----------MISC
+
+for v in STORE_DATA:
+    print("".join(v))
+
+
+
+
+# -----------DUMP
+'''
 # for x in '123456789012345678901234567890':
 #     trialOne = randrange(-1, 6)
 #     trialTwo = randrange(-1, 5)
@@ -28,37 +66,4 @@ empty = [['🟩','🟩','🟩','🟩','🟩'],['🟦','🟦','🟦','🟦','🟦
 #         n-=1
 
 #     STORE_DATA.insert(len(STORE_DATA), baseLineMod)
-
-for x in range(0, 12):
-
-    for y in range(0,6):
-        randSquare = randint(0,4)
-        randList = randint(0,5)
-        baseLineMod[n-1] = ''.join(squares[randList])
-        if y == 5:
-            baseLineMod = [[],[],[],[],[]]
-
-    STORE_DATA.insert(len(STORE_DATA), baseLineMod)
-
-BACKUP_DATA = deepcopy(STORE_DATA)
-        
-
-# -----------MISC
-
-for mnop in STORE_DATA:
-    print("".join(mnop))
-
-# -----------DUMP
-'''
-while i <= 10:
-    for x in 'abcdefghijklmnopqrstuvwzyx1234':
-        randCbLock = randrange(-1,5)
-        baseLineMod[n-1] = changes[randCbLock]
-        if n == 0:
-            n=30
-            i+=1
-        else:
-            n -= 1
-    dupeList = tuple(baseLineMod)
-    STORE_DATA.insert(len(STORE_DATA), list(dupeList))
 '''
