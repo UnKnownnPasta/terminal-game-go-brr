@@ -42,7 +42,7 @@ but modification of indivisual tiles cannot be done
 
 here every [] element's elements are being added to a new [], so a master STORE_DATA in the form of ['', '', '', ...] is made
 """
-    
+
 # THEN FIX IT HERE
 BACKUP_DATA = [] # make a second copy of terrain, this is refined
 for x in STORE_DATA:
@@ -126,7 +126,7 @@ while 1 < 2:
     # BACKWARD
     if c == 's':
 
-        if STORE_DATA[0][lrS_d] == '🟧' or (indS_D !=11 and STORE_DATA[indS_D+1][lrS_d]) == '🟧':
+        if STORE_DATA[0][lrS_d] == '🟧' or indS_D !=11 and STORE_DATA[indS_D+1][lrS_d] == '🟧':
             for p in STORE_DATA:
                 if '👨' in p:
                     tempIndex = p.index('👨')
@@ -146,7 +146,7 @@ while 1 < 2:
     # RIGHTWARDS
     if c == 'd':
 
-        if STORE_DATA[indS_D][0] == '🟧' or (lrS_d != 49 and STORE_DATA[indS_D][lrS_d+1]) == '🟧':
+        if STORE_DATA[indS_D][0] == '🟧' or lrS_d != 49 and STORE_DATA[indS_D][lrS_d+1] == '🟧':
             for p in STORE_DATA:
                 if '👨' in p:
                     tempIndex = p.index('👨')
