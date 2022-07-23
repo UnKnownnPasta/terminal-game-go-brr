@@ -3,7 +3,7 @@ from copy import deepcopy
 from random import randint, randrange
 
 # -----------INITIALIZATION
-STORE_DATA, i, n, l = [], 0, 9, 0
+STORE_DATA, i, n, l, moveCount = [], 0, 9, 0, 0
 
 # -----------TERRAIN
 type1 = ['🟩','🟩','🟩','🟩','🟩']
@@ -55,6 +55,21 @@ for x in STORE_DATA:
 INVENTORY_DATA = ['💓','💓','💓','💓',' ',' ',' ',' ',' ','(','0',')','Inventory:',' ','🔳','🔳','🔳','🔳','🔳','🔳','🔳','🔳','🔳','🔳','🔳','🔳','🔳','🔳','🔳','🔳','🔳','🔳','🔳','🔳','🔳','🔳','🔳','🔳','🔳','🔳','🔳','🔳','🔳','🔳']
 
 BACKUP_DATA.append(INVENTORY_DATA)
+
+print("""  2 𝑫   𝑷 𝑳 𝑨 𝑵 𝑬   𝑴 𝑰 𝑵 𝑬 𝑪 𝑹 𝑨 𝑭 𝑻  
+
+    ❓ Here's how to play:
+        - 'w' for moving up (north)
+        - 's' for moving down (south)
+        - 'a' for moving left (west)
+        - 'd' for moving right (east)
+
+    ❌ Type 'exit' to end the game
+    💓 You have 4 hearts, stepping on lava kills you.
+    🥦 Walk in tree squares to collect wood
+
+    [ ENTER TO CONTINUE ]""", end='')
+input()
 
 for v in BACKUP_DATA:
     print(''.join(v))
@@ -108,9 +123,11 @@ while 1 < 2:
     the main list holding all of the squares
     '''
 
+    moveCount+=1
     # FORWARD
     if c == 'w':
-        if (STORE_DATA[10][lrS_d] == '🟧') or (STORE_DATA[indS_D-1][lrS_d] == '🟧'): # currently inefficient
+        if (STORE_DATA[10][lrS_d] == '🟧' and indS_D == 0) or (STORE_DATA[indS_D-1][lrS_d] == '🟧'):
+            print(STORE_DATA[10][lrS_d], STORE_DATA[indS_D-1][lrS_d])
             if INVENTORY_DATA[3] == '💓':
                 INVENTORY_DATA[3] = '🖤'
                 STORE_DATA[11] = INVENTORY_DATA
@@ -135,7 +152,7 @@ while 1 < 2:
                 del INVENTORY_DATA
                 exit('Game Over! You stepped on lava')
 
-        elif (STORE_DATA[10][lrS_d] == '🥦') or (STORE_DATA[indS_D-1][lrS_d] == '🥦'): # this is for tree detection
+        elif (STORE_DATA[10][lrS_d] == '🥦' and indS_D == 0) or (STORE_DATA[indS_D-1][lrS_d] == '🥦'):
             # inventory data 10 ;;; inv starts at 14
             invCount = INVENTORY_DATA[10]
             if invCount == 0:
@@ -160,7 +177,8 @@ while 1 < 2:
     # BACKWARD
     if c == 's':
 
-        if (STORE_DATA[0][lrS_d] == '🟧') or (indS_D !=10 and STORE_DATA[indS_D+1][lrS_d] == '🟧'):
+        if (STORE_DATA[0][lrS_d] == '🟧'and indS_D == 10) or (indS_D !=10 and STORE_DATA[indS_D+1][lrS_d] == '🟧'):
+            print(STORE_DATA[0][lrS_d], STORE_DATA[indS_D+1][lrS_d])
             if INVENTORY_DATA[3] == '💓':
                 INVENTORY_DATA[3] = '🖤'
                 STORE_DATA[11] = INVENTORY_DATA
@@ -208,7 +226,8 @@ while 1 < 2:
     # RIGHTWARDS
     if c == 'd':
 
-        if (STORE_DATA[indS_D][0] == '🟧') or (lrS_d != 49 and STORE_DATA[indS_D][lrS_d+1] == '🟧'):
+        if (STORE_DATA[indS_D][0] == '🟧' and lrS_d == 49) or (lrS_d != 49 and STORE_DATA[indS_D][lrS_d+1] == '🟧'):
+            print(STORE_DATA[indS_D][0], STORE_DATA[indS_D][lrS_d+1])
             if INVENTORY_DATA[3] == '💓':
                 INVENTORY_DATA[3] = '🖤'
                 STORE_DATA[11] = INVENTORY_DATA
@@ -233,7 +252,7 @@ while 1 < 2:
                 del INVENTORY_DATA
                 exit('Game Over! You stepped on lava')
 
-        elif (STORE_DATA[indS_D][0] == '🥦') or (lrS_d != 49 and STORE_DATA[indS_D][lrS_d+1] == '🥦'):
+        elif (STORE_DATA[indS_D][0] == '🥦' and lrS_d == 49) or (lrS_d != 49 and STORE_DATA[indS_D][lrS_d+1] == '🥦'):
             invCount = INVENTORY_DATA[10]
             if invCount == 0:
                 INVENTORY_DATA[14] = '🟫'
@@ -256,7 +275,8 @@ while 1 < 2:
     # LEFTWARDS
     if c == 'a':
 
-        if (STORE_DATA[indS_D][49] == '🟧') or (STORE_DATA[indS_D][lrS_d-1] == '🟧'):
+        if (STORE_DATA[indS_D][49] == '🟧' and lrS_d == 0) or (STORE_DATA[indS_D][lrS_d-1] == '🟧'):
+            print(STORE_DATA[indS_D][49], STORE_DATA[indS_D][lrS_d-1])
             if INVENTORY_DATA[3] == '💓':
                 INVENTORY_DATA[3] = '🖤'
                 STORE_DATA[11] = INVENTORY_DATA
@@ -281,7 +301,7 @@ while 1 < 2:
                 del INVENTORY_DATA
                 exit('Game Over! You stepped on lava')
 
-        elif (STORE_DATA[indS_D][49] == '🥦') or (STORE_DATA[indS_D][lrS_d-1] == '🥦'):
+        elif (STORE_DATA[indS_D][49] == '🥦' and lrS_d == 0) or (STORE_DATA[indS_D][lrS_d-1] == '🥦'):
             invCount = INVENTORY_DATA[10]
             if invCount == 0:
                 INVENTORY_DATA[14] = '🟫'
@@ -300,6 +320,15 @@ while 1 < 2:
         else:
             STORE_DATA[indS_D][lrS_d] = BACKUP_DATA[indS_D][lrS_d]
             STORE_DATA[indS_D][lrS_d-1] = '👨'
+
+    # HEART REGEN
+    if moveCount%10 == 0:
+        for xxx in INVENTORY_DATA[1:4]:
+            if xxx == '🖤':
+                nx = INVENTORY_DATA.index(xxx)
+                INVENTORY_DATA[nx] = '💓'
+                STORE_DATA[11] = INVENTORY_DATA
+                break
 
     # QUIT GAME
     if c == 'exit':
