@@ -1,9 +1,12 @@
 baseLineMod = [[],[],[],[],[],[],[],[],[],[]]
 from copy import deepcopy
 from random import randint, randrange
+import msvcrt
 
 # -----------INITIALIZATION
 STORE_DATA, i, n, l, moveCount = [], 0, 9, 0, 0
+creativeMode = False
+TERRAIN_DATA = []
 
 # -----------TERRAIN
 type1 = ['🟩','🟩','🟩','🟩','🟩']
@@ -59,14 +62,14 @@ BACKUP_DATA.append(INVENTORY_DATA)
 print("""  2 𝑫   𝑷 𝑳 𝑨 𝑵 𝑬   𝑴 𝑰 𝑵 𝑬 𝑪 𝑹 𝑨 𝑭 𝑻  
 
     ❓ Here's how to play:
-        - 'w' for moving up (north)
-        - 's' for moving down (south)
-        - 'a' for moving left (west)
-        - 'd' for moving right (east)
+        - 'w' or 's' for moving up (north) or down (south)
+        - 'a' or 'd' for moving left (west) or right (east)
+        - 'e' to exit the game, 'c' for creative mode
+        - 'r' to build, 'q' to remove a block (future)
 
-    ❌ Type 'exit' to end the game
     💓 You have 4 hearts, stepping on lava kills you.
-    🥦 Walk in tree squares to collect wood
+    🥦 Walk in tree squares to collect wood.
+    🔨 You can build and destroy built blocks.
 
     [ ENTER TO CONTINUE ]""", end='')
 input()
@@ -74,7 +77,7 @@ input()
 for v in BACKUP_DATA:
     print(''.join(v))
 
-STORE_DATA = deepcopy(BACKUP_DATA) # main terrain
+STORE_DATA = TERRAIN_DATA = deepcopy(BACKUP_DATA) # main terrain
 
 # -----------MOVEMENT
 """
@@ -85,7 +88,7 @@ shifts position w.r.t:
 """
 
 while 1 < 2:
-    c = input()
+    c = msvcrt.getwch()
     test_for_ = 0
 
     # TEST FOR PLAYER
@@ -126,7 +129,7 @@ while 1 < 2:
     moveCount+=1
     # FORWARD
     if c == 'w':
-        if (STORE_DATA[10][lrS_d] == '🟧' and indS_D == 0) or (STORE_DATA[indS_D-1][lrS_d] == '🟧'):
+        if (STORE_DATA[10][lrS_d] == '🟧' and indS_D == 0) or (STORE_DATA[indS_D-1][lrS_d] == '🟧') and creativeMode == False:
             print(STORE_DATA[10][lrS_d], STORE_DATA[indS_D-1][lrS_d])
             if INVENTORY_DATA[3] == '💓':
                 INVENTORY_DATA[3] = '🖤'
@@ -177,7 +180,7 @@ while 1 < 2:
     # BACKWARD
     if c == 's':
 
-        if (STORE_DATA[0][lrS_d] == '🟧'and indS_D == 10) or (indS_D !=10 and STORE_DATA[indS_D+1][lrS_d] == '🟧'):
+        if (STORE_DATA[0][lrS_d] == '🟧'and indS_D == 10) or (indS_D !=10 and STORE_DATA[indS_D+1][lrS_d] == '🟧') and creativeMode == False:
             print(STORE_DATA[0][lrS_d], STORE_DATA[indS_D+1][lrS_d])
             if INVENTORY_DATA[3] == '💓':
                 INVENTORY_DATA[3] = '🖤'
@@ -226,7 +229,7 @@ while 1 < 2:
     # RIGHTWARDS
     if c == 'd':
 
-        if (STORE_DATA[indS_D][0] == '🟧' and lrS_d == 49) or (lrS_d != 49 and STORE_DATA[indS_D][lrS_d+1] == '🟧'):
+        if (STORE_DATA[indS_D][0] == '🟧' and lrS_d == 49) or (lrS_d != 49 and STORE_DATA[indS_D][lrS_d+1] == '🟧') and creativeMode == False:
             print(STORE_DATA[indS_D][0], STORE_DATA[indS_D][lrS_d+1])
             if INVENTORY_DATA[3] == '💓':
                 INVENTORY_DATA[3] = '🖤'
@@ -275,7 +278,7 @@ while 1 < 2:
     # LEFTWARDS
     if c == 'a':
 
-        if (STORE_DATA[indS_D][49] == '🟧' and lrS_d == 0) or (STORE_DATA[indS_D][lrS_d-1] == '🟧'):
+        if (STORE_DATA[indS_D][49] == '🟧' and lrS_d == 0) or (STORE_DATA[indS_D][lrS_d-1] == '🟧') and creativeMode == False:
             print(STORE_DATA[indS_D][49], STORE_DATA[indS_D][lrS_d-1])
             if INVENTORY_DATA[3] == '💓':
                 INVENTORY_DATA[3] = '🖤'
@@ -322,7 +325,7 @@ while 1 < 2:
             STORE_DATA[indS_D][lrS_d-1] = '👨'
 
     # HEART REGEN
-    if moveCount%10 == 0:
+    if moveCount%20 == 0:
         for xxx in INVENTORY_DATA[1:4]:
             if xxx == '🖤':
                 nx = INVENTORY_DATA.index(xxx)
@@ -331,13 +334,62 @@ while 1 < 2:
                 break
 
     # QUIT GAME
-    if c == 'exit':
+    if c == 'e':
         del BACKUP_DATA
         del INVENTORY_DATA
+        creativeMode = False
         for p in STORE_DATA:
             print(''.join(p))
         del STORE_DATA
         exit('Exited the game.')
+
+    # BUILDING (place)
+    if c == 'r':
+        currentMax = int(INVENTORY_DATA[10]) # No. of logs
+        if currentMax == 0 and creativeMode == False:
+            for p in STORE_DATA:
+                print(''.join(p))
+            print('Not enough building materials.')
+            continue
+
+        STORE_DATA[indS_D][lrS_d] = '🟫'
+        BACKUP_DATA[indS_D][lrS_d] = '🟫'
+        for bx in INVENTORY_DATA:
+            if bx == '🟫' and creativeMode == False:
+                INVENTORY_DATA[INVENTORY_DATA.index(bx)] = '🔳'
+                break
+        if creativeMode == False:
+            INVENTORY_DATA[10] = str(int(INVENTORY_DATA[10])-1)
+        else:
+            INVENTORY_DATA[10] = str(int(INVENTORY_DATA[10]))
+        STORE_DATA[11] = INVENTORY_DATA
+
+        # shifting man
+        if lrS_d == 0:
+            STORE_DATA[indS_D][lrS_d+1] = '👨'
+        elif lrS_d > 0:
+            if lrS_d == 49:
+                STORE_DATA[indS_D][lrS_d-1] = '👨'
+            else:
+                STORE_DATA[indS_D][lrS_d+1] = '👨'
+
+    # CREATIVE
+    if c == 'c':
+        if creativeMode == False:
+            creativeMode = True
+            for p in STORE_DATA:
+                print(''.join(p))
+            print('Shifted gamemodes!')
+            continue
+        else:
+            creativeMode = False
+            for p in STORE_DATA:
+                print(''.join(p))
+            print('Shifted gamemodes!')
+            continue
+
+    # BUILDING (pick)
+    # if c == 'q':
 
 
 # -----------------------------------------------------
