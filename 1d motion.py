@@ -74,4 +74,4 @@ while x < 1:
 
         print(''.join(mainLine)) # since mainLine is a list, print it as objects
 
-predone = []
+# -----------
