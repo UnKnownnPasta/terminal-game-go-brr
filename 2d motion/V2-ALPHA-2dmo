@@ -110,7 +110,7 @@ while 1 < 2:
 
     # FORWARD
     if c == 'w':
-        if (STORE_DATA[10][lrS_d] == '🟧') or (STORE_DATA[indS_D-1][lrS_d] == '🟧'):
+        if (STORE_DATA[10][lrS_d] == '🟧') or (STORE_DATA[indS_D-1][lrS_d] == '🟧'): # currently inefficient
             if INVENTORY_DATA[3] == '💓':
                 INVENTORY_DATA[3] = '🖤'
                 STORE_DATA[11] = INVENTORY_DATA
@@ -135,7 +135,7 @@ while 1 < 2:
                 del INVENTORY_DATA
                 exit('Game Over! You stepped on lava')
 
-        elif (STORE_DATA[10][lrS_d] == '🥦') or (STORE_DATA[indS_D-1][lrS_d] == '🥦'):
+        elif (STORE_DATA[10][lrS_d] == '🥦') or (STORE_DATA[indS_D-1][lrS_d] == '🥦'): # this is for tree detection
             # inventory data 10 ;;; inv starts at 14
             invCount = INVENTORY_DATA[10]
             if invCount == 0:
