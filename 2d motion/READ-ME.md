@@ -10,3 +10,9 @@ movement is finalized
 terrain in finalized.
 
 version 1 is out
+
+version 2:
+new terrain
+new movement
+new mechanics
+new gui(lmao console gui)
