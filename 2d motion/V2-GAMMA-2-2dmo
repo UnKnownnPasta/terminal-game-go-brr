@@ -1,5 +1,6 @@
 baseLineMod = [[],[],[],[],[],[],[],[],[],[]]
 from copy import deepcopy
+from distutils.command.build import build
 from random import randint, randrange
 import msvcrt
 
@@ -7,6 +8,10 @@ import msvcrt
 STORE_DATA, i, n, l, moveCount = [], 0, 9, 0, 0
 creativeMode = False
 TERRAIN_DATA = []
+
+# def buildTerrain():
+#     for p in STORE_DATA:
+#         print(''.join(p))
 
 # -----------TERRAIN
 type1 = ['🟩','🟩','🟩','🟩','🟩']
@@ -65,7 +70,7 @@ print("""  2 𝑫   𝑷 𝑳 𝑨 𝑵 𝑬   𝑴 𝑰 𝑵 𝑬 𝑪 𝑹 �
         - 'w' or 's' for moving up (north) or down (south)
         - 'a' or 'd' for moving left (west) or right (east)
         - 'e' to exit the game, 'c' for creative mode
-        - 'r' to build, 'q' to remove a block (future)
+        - 'r' to build, 'q' to remove a block
 
     💓 You have 4 hearts, stepping on lava kills you.
     🥦 Walk in tree squares to collect wood.
@@ -73,11 +78,11 @@ print("""  2 𝑫   𝑷 𝑳 𝑨 𝑵 𝑬   𝑴 𝑰 𝑵 𝑬 𝑪 𝑹 �
 
     [ ENTER TO CONTINUE ]""", end='')
 input()
+for n in BACKUP_DATA:
+    print(''.join(n))
 
-for v in BACKUP_DATA:
-    print(''.join(v))
-
-STORE_DATA = TERRAIN_DATA = deepcopy(BACKUP_DATA) # main terrain
+STORE_DATA = deepcopy(BACKUP_DATA) # main terrain
+TERRAIN_DATA = deepcopy(BACKUP_DATA)
 
 # -----------MOVEMENT
 """
@@ -352,8 +357,10 @@ while 1 < 2:
             print('Not enough building materials.')
             continue
 
-        STORE_DATA[indS_D][lrS_d] = '🟫'
-        BACKUP_DATA[indS_D][lrS_d] = '🟫'
+        if BACKUP_DATA[indS_D][lrS_d] == '🟫':
+            continue
+
+        STORE_DATA[indS_D][lrS_d] = BACKUP_DATA[indS_D][lrS_d] = '🟫'
         for bx in INVENTORY_DATA:
             if bx == '🟫' and creativeMode == False:
                 INVENTORY_DATA[INVENTORY_DATA.index(bx)] = '🔳'
@@ -389,8 +396,46 @@ while 1 < 2:
             continue
 
     # BUILDING (pick)
-    # if c == 'q':
+    if c == 'q':
+        currentMax = int(INVENTORY_DATA[10])
+        if currentMax == 30:
+            for p in STORE_DATA:
+                print(''.join(p))
+            print('No space in inventory to pick up this block.')
+            continue
+        
+        if BACKUP_DATA[indS_D][lrS_d] != '🟫':
+            for p in STORE_DATA:
+                print(''.join(p))
+            print('You can only pick up blocks you place.')
+            continue
 
+        for lm in INVENTORY_DATA:
+            if lm == '🔳' and creativeMode == False:
+                INVENTORY_DATA[INVENTORY_DATA.index(lm)] = '🟫'
+                # INVENTORY_DATA[10] = str(int(INVENTORY_DATA[10])+1)
+                break
+
+        if creativeMode == False:
+            INVENTORY_DATA[10] = str(int(INVENTORY_DATA[10])+1)
+        else:
+            INVENTORY_DATA[10] = str(int(INVENTORY_DATA[10]))
+        
+        STORE_DATA[11] = INVENTORY_DATA
+
+        STORE_DATA[indS_D][lrS_d] = TERRAIN_DATA[indS_D][lrS_d]
+        print(TERRAIN_DATA[indS_D][lrS_d])
+        BACKUP_DATA[indS_D][lrS_d] = TERRAIN_DATA[indS_D][lrS_d]
+
+        # shifting man
+        if lrS_d == 0:
+            STORE_DATA[indS_D][lrS_d+1] = '👨'
+        elif lrS_d > 0:
+            if lrS_d == 49:
+                STORE_DATA[indS_D][lrS_d-1] = '👨'
+            else:
+                STORE_DATA[indS_D][lrS_d-1] = '👨'
+        
 
 # -----------------------------------------------------
 
