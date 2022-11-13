@@ -58,7 +58,7 @@ bckpT1 = deepcopy(TerrainOne)
 bckpT2 = deepcopy(TerrainTwo)
 bckpT3 = deepcopy(TerrainThree)
 
-def createCave(x, y, map, bkpMap):
+def createCave(x, y, map, bkpMap): # Generate the entrance to the cave in the map
     for i in range(y, y+3):
         for j in range(x,x+4):
             if i == y or i == y+2:
@@ -72,8 +72,6 @@ def createCave(x, y, map, bkpMap):
                 
 dx, dy = randint(14,18), randint(1,3)
 createCave(dx, dy, TerrainTwo, bckpT2)
-
-# ----------------------> NOTE TO SELF: have finished and perfected movement
 
 # Now Moving To Player Movement
 import msvcrt
@@ -92,8 +90,7 @@ def hbLog(listType): # Print the hearts + hotbar
         print(i,end='')
 
 def healthModify(listInv): # Register damage
-    # 0,1,..,8 health also shift + enter for python ide
-    for i in range(8,-1,-1):
+    for i in range(8,-1,-1): # 0,1,..,8
         if listInv[i] == '💓':
             if i == 0:
                 listInv[i] = '🖤'
@@ -102,7 +99,7 @@ def healthModify(listInv): # Register damage
                 listInv[i] = '🖤'
                 return 'alive'
 
-def invModify(item, listPrim): # Register pickinh up wood from trees
+def invModify(item, listPrim): # Register picking up wood from trees
     for i in range(12,len(listPrim)):
         found = -1
         if found == -1 and listPrim[i] == '🔲':
@@ -162,7 +159,7 @@ while True:
 
 # --------------------------------------------------------------------------------------------------------------------------------------------
     if currentTerrain == 0:
-        match c: # check for fw/ bw/ sideways and shift x and y coord correspondingly
+        match c: # check for fw / bw / sideways and shift x and y coord correspondingly
             case 'w':
                 if y == 0:
                     TerrainOne[y][x], TerrainOne[5][x] = bckpT1[y][x], '👨'
@@ -171,7 +168,7 @@ while True:
                     x, y = x, 5
                 else:
                     TerrainOne[y][x], TerrainOne[y-1][x] = bckpT1[y][x], '👨'
-                    call = objEncounterCheck(TerrainOne, x, y-1, hotbar, bckpT1) # its a object check for tree, lava under one thing and implemented only for t1 w
+                    call = objEncounterCheck(TerrainOne, x, y-1, hotbar, bckpT1) 
                     if call == 'quit': break
                     x, y = x, y-1
 
@@ -265,7 +262,7 @@ while True:
                         TerrainTwo[y][x], TerrainTwo[5][x] = bckpT2[y][x], '👨'
                         x, y = x, 5
                 else:
-                    call = objEncounterCheck(TerrainTwo, x, y-1, hotbar, bckpT2) # its a object check for tree, lava under one thing and implemented only for t1 w
+                    call = objEncounterCheck(TerrainTwo, x, y-1, hotbar, bckpT2) 
                     if call == 'quit': break
                     elif call == 'nomove': continue
                     else:
@@ -281,7 +278,7 @@ while True:
                         TerrainTwo[y][x], TerrainTwo[0][x] = bckpT2[y][x], '👨'
                         x, y = x, 0
                 else:
-                    call = objEncounterCheck(TerrainTwo, x, y+1, hotbar, bckpT2) # its a object check for tree, lava under one thing and implemented only for t1 w
+                    call = objEncounterCheck(TerrainTwo, x, y+1, hotbar, bckpT2) 
                     
                     if call == 'quit': break
                     elif call == 'nomove': continue
@@ -299,7 +296,7 @@ while True:
                 else:
                     call = objEncounterCheck(TerrainTwo, x-1, y, hotbar, bckpT2)
                     if call == 'quit': break
-                    elif call == 'nomove': continue
+                    elif call == 'nomove': continue # Check if you moved into a spot occuiped by entrance to cave
                     elif call == 'entercave':
                         currentTerrain = 3
                         x, y = 0, 0
@@ -377,7 +374,7 @@ while True:
                     x, y = x, 5
                 else:
                     TerrainThree[y][x], TerrainThree[y-1][x] = bckpT3[y][x], '👨'
-                    call = objEncounterCheck(TerrainThree, x, y-1, hotbar, bckpT3) # its a object check for tree, lava under one thing and implemented only for t1 w
+                    call = objEncounterCheck(TerrainThree, x, y-1, hotbar, bckpT3)
                     if call == 'quit': break
                     x, y = x, y-1
 
