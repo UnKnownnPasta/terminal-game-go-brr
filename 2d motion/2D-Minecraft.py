@@ -26,57 +26,30 @@ actual fucking logic in the game
 from copy import deepcopy
 from random import randint
 
-# This is where the lists for movemable terrain is prepared
-TerrainOne = []
-for i in range(0,6):
-    ns = []
-    for j in range(0,30):
-        percent = randint(1,100)
-        if percent > 80:
-            ns.append('🟨')
-        elif percent > 20 and percent < 80:
-            ns.append('🟩')
-        elif percent < 20 and percent > 10:
-            ns.append('🟦')
-        elif percent < 5:
-            ns.append('🟧')
-        else:
-            ns.append('🌳')
-    TerrainOne.append(ns)
+# This is where the lists for terrain is prepared
+TerrainOne, TerrainTwo, TerrainThree = ([] for i in range(3)) # Unpack three uninitialized lists
+for i in range(3):
+    for j in range(6):
+        ns = []
+        for k in range(30):
+            percent = randint(1,100)
+            if percent > 80:
+                ns.append('🟨')
+            elif percent > 20 and percent < 80:
+                ns.append('🟩')
+            elif percent < 20 and percent > 10:
+                ns.append('🟦')
+            elif percent < 5:
+                ns.append('🟧')
+            else:
+                ns.append('🌳')
+        if i == 0: TerrainOne.append(ns) 
+        if i == 1: TerrainTwo.append(ns)
+        if i == 2: TerrainThree.append(ns)
 
-TerrainTwo = []
-for i in range(0,6):
-    ns = []
-    for j in range(0,30):
-        percent = randint(1,100)
-        if percent > 80:
-            ns.append('🟨')
-        elif percent > 20 and percent < 80:
-            ns.append('🟩')
-        elif percent < 20 and percent > 10:
-            ns.append('🟦')
-        elif percent < 5:
-            ns.append('🟧')
-        else:
-            ns.append('🌳')
-    TerrainTwo.append(ns)
-
-TerrainThree = []
-for i in range(0,6):
-    ns = []
-    for j in range(0,30):
-        percent = randint(1,100)
-        if percent > 80:
-            ns.append('🟨')
-        elif percent > 20 and percent < 80:
-            ns.append('🟩')
-        elif percent < 20 and percent > 10:
-            ns.append('🟦')
-        elif percent < 5:
-            ns.append('🟧')
-        else:
-            ns.append('🌳')
-    TerrainThree.append(ns)
+TerrainOne.append('T-0')
+TerrainTwo.append('T-1')
+TerrainThree.append('T-2')
 
 hotbar = ['💓']*9+[' '*11,'👨',' '*11]+['🔲']*9 # just a simpler way of making the list
 inventory = ['🔲']*25
@@ -109,8 +82,8 @@ x, y = 0, 0
 currentTerrain, errL, placeable = 0, [], ['🟫']
 
 def mapLog(listType): # Print the current map
-    for i in listType:
-        for j in i:
+    for i in range(0,len(listType)-1):
+        for j in listType[i]:
             print(j,end='')
         print()
 
@@ -143,6 +116,10 @@ def invModify(item, listPrim): # Register pickinh up wood from trees
                 break
 
 def objEncounterCheck(terrainMap, xCord, yCord, listInv, bckpTerrain): # Check if you walked into lava or tree
+    if terrainMap[6] == 'T-1' and bckpTerrain[yCord][xCord] in ['⬛', '  ']:
+        match bckpTerrain[yCord][xCord]:
+            case '⬛': return 'nomove'
+            case '  ': return 'entercave'
     if bckpTerrain[yCord][xCord] == '🌳':
         invModify('🟫',listInv)
     elif bckpTerrain[yCord][xCord] == '🟧':
@@ -154,7 +131,7 @@ def objEncounterCheck(terrainMap, xCord, yCord, listInv, bckpTerrain): # Check i
             print('\nYou Died by Stepping On Lava!')
             return 'quit'
 
-def queueerror(msg, typ): # If requirements arent met for a action, queue the error here
+def queueerror(msg, typ): # If requirements arent met for a action, queue the error here to print during next interation of the loop
     errL.append(f'{typ} | {msg}')
 
 queueerror('Movement: w/a/s/d Place blocks(q) and Remove blocks(r)', 'Game is Ready!') # Sample run of queueerror()
@@ -179,11 +156,11 @@ while True:
 
         As for placing/removing blocks, you check hotbar first for seeing if u can place anything or hotbar to check if u can pick it up
     """
-
-    
     print()
     c = msvcrt.getwch()
-    # each "biome" has its own code, just looks same rn
+
+
+# --------------------------------------------------------------------------------------------------------------------------------------------
     if currentTerrain == 0:
         match c: # check for fw/ bw/ sideways and shift x and y coord correspondingly
             case 'w':
@@ -215,7 +192,7 @@ while True:
                     continue
                 else:
                     TerrainOne[y][x], TerrainOne[y][x-1] = bckpT1[y][x], '👨'
-                    call = objEncounterCheck(TerrainOne, x-2, y, hotbar, bckpT1)
+                    call = objEncounterCheck(TerrainOne, x-1, y, hotbar, bckpT1)
                     if call == 'quit': break
                     x, y = x-1, y
 
@@ -274,33 +251,43 @@ while True:
             case 'r':
                 break
 
+
 # movement to be modified to check if player enters cave
 # --------------------------------------------------------------------------------------------------------------------------------------------
-    if currentTerrain == 1: # 2nd Biome
+    elif currentTerrain == 1: # 2nd Biome
         match c:
             case 'w':
                 if y == 0:
-                    TerrainTwo[y][x], TerrainTwo[5][x] = bckpT2[y][x], '👨'
-                    call = objEncounterCheck(TerrainTwo, x, 5, hotbar, bckpT2)  
+                    call = objEncounterCheck(TerrainTwo, x, 5, hotbar, bckpT2)
                     if call == 'quit': break
-                    x, y = x, 5
+                    elif call == 'nomove': continue
+                    else:
+                        TerrainTwo[y][x], TerrainTwo[5][x] = bckpT2[y][x], '👨'
+                        x, y = x, 5
                 else:
-                    TerrainTwo[y][x], TerrainTwo[y-1][x] = bckpT2[y][x], '👨'
                     call = objEncounterCheck(TerrainTwo, x, y-1, hotbar, bckpT2) # its a object check for tree, lava under one thing and implemented only for t1 w
                     if call == 'quit': break
-                    x, y = x, y-1
+                    elif call == 'nomove': continue
+                    else:
+                        TerrainTwo[y][x], TerrainTwo[y-1][x] = bckpT2[y][x], '👨'
+                        x, y = x, y-1
 
             case 's':
                 if y == 5:
-                    TerrainTwo[y][x], TerrainTwo[0][x] = bckpT2[y][x], '👨'
                     call = objEncounterCheck(TerrainTwo, x, 0, hotbar, bckpT2)
                     if call == 'quit': break
-                    x, y = x, 0
+                    elif call == 'nomove': continue
+                    else:
+                        TerrainTwo[y][x], TerrainTwo[0][x] = bckpT2[y][x], '👨'
+                        x, y = x, 0
                 else:
-                    TerrainTwo[y][x], TerrainTwo[y+1][x] = bckpT2[y][x], '👨'
-                    call = objEncounterCheck(TerrainTwo, x, y+1, hotbar, bckpT2)
+                    call = objEncounterCheck(TerrainTwo, x, y+1, hotbar, bckpT2) # its a object check for tree, lava under one thing and implemented only for t1 w
+                    
                     if call == 'quit': break
-                    x, y = x, y+1
+                    elif call == 'nomove': continue
+                    else:
+                        TerrainTwo[y][x], TerrainTwo[y+1][x] = bckpT2[y][x], '👨'
+                        x, y = x, y+1
 
             case 'a':
                 if x == 0:
@@ -310,10 +297,16 @@ while True:
                     if call == 'quit': break
                     x, y = 29, y
                 else:
-                    TerrainTwo[y][x], TerrainTwo[y][x-1] = bckpT2[y][x], '👨'
-                    call = objEncounterCheck(TerrainTwo, x-2, y, hotbar, bckpT2)
+                    call = objEncounterCheck(TerrainTwo, x-1, y, hotbar, bckpT2)
                     if call == 'quit': break
-                    x, y = x-1, y
+                    elif call == 'nomove': continue
+                    elif call == 'entercave':
+                        currentTerrain = 3
+                        x, y = 0, 0
+                        continue
+                    else:
+                        TerrainTwo[y][x], TerrainTwo[y][x-1] = bckpT2[y][x], '👨'
+                        x, y = x-1, y
 
             case 'd':
                 if x == 29:
@@ -323,10 +316,12 @@ while True:
                     if call == 'quit': break
                     x = 0
                 else:
-                    TerrainTwo[y][x], TerrainTwo[y][x+1] = bckpT2[y][x], '👨'
                     call = objEncounterCheck(TerrainTwo, x+1, y, hotbar, bckpT2)
                     if call == 'quit': break
-                    x, y = x+1, y
+                    elif call == 'nomove': continue
+                    else:
+                        TerrainTwo[y][x], TerrainTwo[y][x+1] = bckpT2[y][x], '👨'
+                        x, y = x+1, y
             
             case 'x': #ignore
                 for i in inventory:
@@ -372,7 +367,7 @@ while True:
 
 
 # --------------------------------------------------------------------------------------------------------------------------------------------
-    if currentTerrain == 2: # 3rd Biome
+    elif currentTerrain == 2: # 3rd Biome
         match c: 
             case 'w':
                 if y == 0:
@@ -407,7 +402,7 @@ while True:
                     x, y = 29, y
                 else:
                     TerrainThree[y][x], TerrainThree[y][x-1] = bckpT3[y][x], '👨'
-                    call = objEncounterCheck(TerrainThree, x-2, y, hotbar, bckpT3)
+                    call = objEncounterCheck(TerrainThree, x-1, y, hotbar, bckpT3)
                     if call == 'quit': break
                     x, y = x-1, y
 
@@ -461,4 +456,14 @@ while True:
 
             case 'r':
                 break
-    # print('\n\n\n\n')
+
+
+# --------------------------------------------------------------------------------------------------------------------------------------------
+    elif currentTerrain == 3: # Cave
+        mapLog(TerrainTwo)
+        if c == 'r':
+            break
+        """
+        NOTE: so i have to code generating terrain for the cave, as well as movement in/out of cave
+        currently fixed all bugs and game is stable
+        """
