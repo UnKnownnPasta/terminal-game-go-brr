@@ -212,10 +212,7 @@ while True:
 
             case 'a':
                 if x == 0:
-                    TerrainOne[y][x], TerrainOne[y][29] = bckpT1[y][x], '👨'
-                    call = objEncounterCheck(TerrainOne, 29, y, hotbar, bckpT1)
-                    if call == 'quit': break
-                    x, y = 29, y
+                    continue
                 else:
                     TerrainOne[y][x], TerrainOne[y][x-1] = bckpT1[y][x], '👨'
                     call = objEncounterCheck(TerrainOne, x-2, y, hotbar, bckpT1)
@@ -226,7 +223,7 @@ while True:
                 if x == 29:
                     currentTerrain = 1
                     TerrainOne[y][29], TerrainTwo[y][0] = bckpT1[y][29], '👨'
-                    call = objEncounterCheck(TerrainOne, 0, y, hotbar, bckpT1)
+                    call = objEncounterCheck(TerrainTwo, 0, y, hotbar, bckpT2)
                     if call == 'quit': break
                     x = 0
                 else:
@@ -307,8 +304,9 @@ while True:
 
             case 'a':
                 if x == 0:
-                    TerrainTwo[y][x], TerrainTwo[y][29] = bckpT2[y][x], '👨'
-                    call = objEncounterCheck(TerrainTwo, 29, y, hotbar, bckpT2)
+                    currentTerrain = 0
+                    TerrainTwo[y][x], TerrainOne[y][29] = bckpT2[y][x], '👨'
+                    call = objEncounterCheck(TerrainOne, 29, y, hotbar, bckpT1)
                     if call == 'quit': break
                     x, y = 29, y
                 else:
@@ -319,9 +317,9 @@ while True:
 
             case 'd':
                 if x == 29:
-                    currentTerrain = 1
-                    TerrainTwo[y][29], TerrainTwo[y][0] = bckpT2[y][29], '👨'
-                    call = objEncounterCheck(TerrainTwo, 0, y, hotbar, bckpT2)
+                    currentTerrain = 2
+                    TerrainTwo[y][29], TerrainThree[y][0] = bckpT2[y][29], '👨'
+                    call = objEncounterCheck(TerrainThree, 0, y, hotbar, bckpT3)
                     if call == 'quit': break
                     x = 0
                 else:
@@ -402,8 +400,9 @@ while True:
 
             case 'a':
                 if x == 0:
-                    TerrainThree[y][x], TerrainThree[y][29] = bckpT3[y][x], '👨'
-                    call = objEncounterCheck(TerrainThree, 29, y, hotbar, bckpT3)
+                    currentTerrain = 1
+                    TerrainThree[y][x], TerrainTwo[y][29] = bckpT3[y][x], '👨'
+                    call = objEncounterCheck(TerrainTwo, 29, y, hotbar, bckpT2)
                     if call == 'quit': break
                     x, y = 29, y
                 else:
@@ -414,11 +413,7 @@ while True:
 
             case 'd':
                 if x == 29:
-                    currentTerrain = 1
-                    TerrainThree[y][29], TerrainTwo[y][0] = bckpT3[y][29], '👨'
-                    call = objEncounterCheck(TerrainThree, 0, y, hotbar, bckpT3)
-                    if call == 'quit': break
-                    x = 0
+                    continue
                 else:
                     TerrainThree[y][x], TerrainThree[y][x+1] = bckpT3[y][x], '👨'
                     call = objEncounterCheck(TerrainThree, x+1, y, hotbar, bckpT3)
