@@ -9,13 +9,13 @@ f -> scroll hotbar
     contains: creative, hotbar overview, switch items from hotbar to hotbar, crafting
 r to stop the game, x to show controls etc
 
-world: biomes | huge fucking map
+world: biomes | huge fucking map ✔ sorta?
+caves ✔
 portal craftable -> nether only
 villages -> one per world always at corner
     only has 1 villager, 1 chest
 
 future future future wish:
-caves :D
 make render distance a thing
 mobs
 actual fucking logic in the game
@@ -27,7 +27,7 @@ from copy import deepcopy
 from random import randint
 
 # This is where the lists for terrain is prepared
-TerrainOne, TerrainTwo, TerrainThree = ([] for i in range(3)) # Unpack three uninitialized lists
+TerrainOne, TerrainTwo, TerrainThree, CaveMap = ([] for i in range(4)) # Unpack three uninitialized lists
 for i in range(3):
     for j in range(6):
         ns = []
@@ -47,9 +47,30 @@ for i in range(3):
         if i == 1: TerrainTwo.append(ns)
         if i == 2: TerrainThree.append(ns)
 
+for j in range(8): # Cave map gen
+    ns = []
+    for k in range(30):
+        if j%2 == 0:
+            percent = randint(1,100)
+            if percent > 70:
+                ns.append('🔲')
+            elif percent in range(30,70):
+                ns.append('⬜')
+            else:
+                ns.append('🟪')
+        else:
+            if randint(0,10) < 1:
+                ns.append('🟧')
+            else:
+                ns.append('  ')
+    CaveMap.append(ns)
+
+CaveMap[1][29] = CaveMap[3][29] = CaveMap[3][0] = CaveMap[5][0] = '⬜'
+CaveMap[2][28] = CaveMap[4][1] = '  '
+
 TerrainOne.append('T-0')
 TerrainTwo.append('T-1')
-TerrainThree.append('T-2')
+TerrainThree.append('T-2') # Just list identifiers
 
 hotbar = ['💓']*9+[' '*11,'👨',' '*11]+['🔲']*9 # just a simpler way of making the list
 inventory = ['🔲']*25
@@ -57,6 +78,12 @@ inventory = ['🔲']*25
 bckpT1 = deepcopy(TerrainOne)
 bckpT2 = deepcopy(TerrainTwo)
 bckpT3 = deepcopy(TerrainThree)
+
+# Now Moving To Player Movement
+import msvcrt
+TerrainOne[0][0] = '👨'
+x, y = 0, 0
+currentTerrain, errorList, placeableBlocks, noMoveBlocks = 0, [], ['🟫'], ['⬜', '🟪', '🔲']
 
 def createCave(x, y, map, bkpMap): # Generate the entrance to the cave in the map
     for i in range(y, y+3):
@@ -70,14 +97,8 @@ def createCave(x, y, map, bkpMap): # Generate the entrance to the cave in the ma
                 if j in [x+1, x+2]:
                     map[i][j], bkpMap[i][j] = '  ', '  '
                 
-dx, dy = randint(14,18), randint(1,3)
+dx, dy, dxy = randint(14,18), randint(1,3), []
 createCave(dx, dy, TerrainTwo, bckpT2)
-
-# Now Moving To Player Movement
-import msvcrt
-TerrainOne[0][0] = '👨'
-x, y = 0, 0
-currentTerrain, errL, placeable = 0, [], ['🟫']
 
 def mapLog(listType): # Print the current map
     for i in range(0,len(listType)-1):
@@ -129,20 +150,21 @@ def objEncounterCheck(terrainMap, xCord, yCord, listInv, bckpTerrain): # Check i
             return 'quit'
 
 def queueerror(msg, typ): # If requirements arent met for a action, queue the error here to print during next interation of the loop
-    errL.append(f'{typ} | {msg}')
+    errorList.append(f'{typ} | {msg}')
 
-queueerror('Movement: w/a/s/d Place blocks(q) and Remove blocks(r)', 'Game is Ready!') # Sample run of queueerror()
+queueerror('Movement: w/a/s/d Place blocks(q) and Remove blocks(r), Move around in 3 different maps', 'Game is Ready!') # Sample run of queueerror()
 
 # Movement loop
 while True:
     if currentTerrain == 0: mapLog(TerrainOne)
     elif currentTerrain == 1: mapLog(TerrainTwo)
     elif currentTerrain == 2: mapLog(TerrainThree)
+    elif currentTerrain == 3: mapLog(CaveMap)
     hbLog(hotbar)
     print()
-    for i in range(len(errL)-1,-1,-1): # Shit out all stored errors from previous loop iteration
-        print(errL[i], end='')
-        errL.pop()
+    for i in range(len(errorList)-1,-1,-1): # Shit out all stored errors from previous loop iteration
+        print(errorList[i], end='')
+        errorList.pop()
 
     """
     Basic principle is:
@@ -231,7 +253,7 @@ while True:
                             break
                 
             case 'q': # Code to pickup a block placed by you
-                if bckpT1[y][x] not in placeable:
+                if bckpT1[y][x] not in placeableBlocks:
                     queueerror('Can only pick up blocks placed by you.', 'Cannot do action')
                 else:
                     if x == 29:
@@ -299,7 +321,10 @@ while True:
                     elif call == 'nomove': continue # Check if you moved into a spot occuiped by entrance to cave
                     elif call == 'entercave':
                         currentTerrain = 3
-                        x, y = 0, 0
+                        TerrainTwo[y][x] = bckpT2[y][x]
+                        dxy += [x,y] # record position of cave entrance
+                        CaveMap[1][0] = '👨'
+                        x, y = 0, 1
                         continue
                     else:
                         TerrainTwo[y][x], TerrainTwo[y][x-1] = bckpT2[y][x], '👨'
@@ -345,7 +370,7 @@ while True:
                             break
                 
             case 'q':
-                if bckpT2[y][x] not in placeable:
+                if bckpT2[y][x] not in placeableBlocks:
                     queueerror('Can only pick up blocks placed by you.', 'Cannot do action')
                 else:
                     if x == 29:
@@ -437,7 +462,7 @@ while True:
                             break
                 
             case 'q':
-                if bckpT3[y][x] not in placeable:
+                if bckpT3[y][x] not in placeableBlocks:
                     queueerror('Can only pick up blocks placed by you.', 'Cannot do action')
                 else:
                     if x == 29:
@@ -457,10 +482,66 @@ while True:
 
 # --------------------------------------------------------------------------------------------------------------------------------------------
     elif currentTerrain == 3: # Cave
-        mapLog(TerrainTwo)
-        if c == 'r':
-            break
+
+        match c:
+            case 'w':
+                if CaveMap[y-1][x] in noMoveBlocks:
+                    continue
+                else:
+                    CaveMap[y][x], CaveMap[y-1][x] = '  ', '👨'
+                    x, y = x, y-1
+
+            case 's':
+                if CaveMap[y+1][x] in noMoveBlocks:
+                    continue
+                else:
+                    CaveMap[y][x], CaveMap[y+1][x] = '  ', '👨'
+                    x, y = x, y+1
+
+            case 'd':
+                if y == 5:
+                    if x == 29:
+                        currentTerrain = 1
+                        x, y = dxy[0], dxy[1]
+                        TerrainTwo[y][x] = '👨'
+                        CaveMap[5][29] = '  '
+                    else:
+                        if CaveMap[y][x+1] in noMoveBlocks:
+                            continue
+                        else:
+                            CaveMap[y][x], CaveMap[y][x+1] = '  ', '👨'
+                            x, y = x+1, y
+                else:
+                    if CaveMap[y][x+1] in noMoveBlocks:
+                        continue
+                    else:
+                        CaveMap[y][x], CaveMap[y][x+1] = '  ', '👨'
+                        x, y = x+1, y
+
+            case 'a':
+                if y == 1:
+                    if x == 0:
+                        currentTerrain = 1
+                        x,y = dxy[0], dxy[1]
+                        TerrainTwo[y][x] = '👨'
+                        CaveMap[1][0] = '  '
+                    else:
+                        if CaveMap[y][x-1] in noMoveBlocks:
+                            continue
+                        else:
+                            CaveMap[y][x], CaveMap[y][x-1] = '  ', '👨'
+                            x, y = x-1, y   
+                else:
+                    if CaveMap[y][x-1] in noMoveBlocks:
+                        continue
+                    else:
+                        CaveMap[y][x], CaveMap[y][x-1] = '  ', '👨'
+                        x, y = x-1, y
+
+            case 'r':
+                break
+
         """
-        NOTE: so i have to code generating terrain for the cave, as well as movement in/out of cave
-        currently fixed all bugs and game is stable
+        NOTE: Coded movement in and out of cave, no bugs - stable
+        To add cave functionality, but add inventory mechanic and crafting first
         """
