@@ -4,10 +4,11 @@
 mechanics: w/a/s/d movement ✔
 e -> place a block ✔
 q -> remove a block ✔
-f -> scroll hotbar
-/ -> command prompt
-    contains: creative, hotbar overview, switch items from hotbar to hotbar, crafting
-r to stop the game, x to show controls etc
+f -> scroll hotbar ✔ (now x)
+/ -> command prompt ✔
+    contains: creative, hotbar overview, switch items from hotbar to inv, crafting
+                              ✔                        ✔                    ✔
+r to stop the game, x to show controls etc ✔ (instead of x, /)
 
 world: biomes | huge fucking map ✔ sorta?
 caves ✔
@@ -66,11 +67,12 @@ for j in range(8): # Cave map gen
     CaveMap.append(ns)
 
 CaveMap[1][29] = CaveMap[3][29] = CaveMap[3][0] = CaveMap[5][0] = '⬜'
-CaveMap[2][28] = CaveMap[4][1] = '  '
+CaveMap[2][28] = CaveMap[4][1] = '  ' # fixing walls
 
-TerrainOne.append('T-0')
-TerrainTwo.append('T-1')
-TerrainThree.append('T-2') # Just list identifiers
+TerrainOne += ['T-0', {'dropcount':0}]
+TerrainTwo += ['T-1', {'dropcount':0}]
+TerrainThree += ['T-2', {'dropcount':0}] # Just list identifiers
+CaveMap += ['C-0', {'dropcount':0}]
 
 hotbar = ['💓']*9+[' '*11,'👨',' '*11]+['🔲']*9 # just a simpler way of making the list
 inventory = ['🔲']*25
@@ -78,12 +80,24 @@ inventory = ['🔲']*25
 bckpT1 = deepcopy(TerrainOne)
 bckpT2 = deepcopy(TerrainTwo)
 bckpT3 = deepcopy(TerrainThree)
+textTemp = """ Type a number
+    1 => Switch items
+    2 => Crafting
+    3 => Heal (food)
+    4 => Drop item (from hotbar)"""
 
 # Now Moving To Player Movement
 import msvcrt
 TerrainOne[0][0] = '👨'
 x, y = 0, 0
 currentTerrain, errorList, placeableBlocks, noMoveBlocks = 0, [], ['🟫'], ['⬜', '🟪', '🔲']
+
+terrainMapStorage = {
+    't0': TerrainOne, 'b0': bckpT1,
+    't1': TerrainTwo, 'b1': bckpT2,
+    't2': TerrainThree, 'b2': bckpT3,
+    't3': CaveMap, 'b3': CaveMap # supposed to be backup map
+}
 
 def createCave(x, y, map, bkpMap): # Generate the entrance to the cave in the map
     for i in range(y, y+3):
@@ -96,12 +110,12 @@ def createCave(x, y, map, bkpMap): # Generate the entrance to the cave in the ma
                     map[i][j], bkpMap[i][j] = '⬛', '⬛'
                 if j in [x+1, x+2]:
                     map[i][j], bkpMap[i][j] = '  ', '  '
-                
+
 dx, dy, dxy = randint(14,18), randint(1,3), []
 createCave(dx, dy, TerrainTwo, bckpT2)
 
 def mapLog(listType): # Print the current map
-    for i in range(0,len(listType)-1):
+    for i in range(0,len(listType)-2):
         for j in listType[i]:
             print(j,end='')
         print()
@@ -133,7 +147,7 @@ def invModify(item, listPrim): # Register picking up wood from trees
                 inventory[i] = item
                 break
 
-def objEncounterCheck(terrainMap, xCord, yCord, listInv, bckpTerrain): # Check if you walked into lava or tree
+def objEncounterCheck(terrainMap, xCord, yCord, listInv, bckpTerrain): # Check if you walked into lava or tree or walls of cave
     if terrainMap[6] == 'T-1' and bckpTerrain[yCord][xCord] in ['⬛', '  ']:
         match bckpTerrain[yCord][xCord]:
             case '⬛': return 'nomove'
@@ -150,9 +164,92 @@ def objEncounterCheck(terrainMap, xCord, yCord, listInv, bckpTerrain): # Check i
             return 'quit'
 
 def queueerror(msg, typ): # If requirements arent met for a action, queue the error here to print during next interation of the loop
-    errorList.append(f'{typ} | {msg}')
+    errorList.append(f"{typ} | {msg}")
+
+def dropItem(list, hb): # drop an item at a spot in map
+    countDrop = list[-1]['dropcount'] + 1
+    text = f'drop-{countDrop}'
+    list[-1][text] = f'{hb[int(c4)+11]}|x{x}y{y}'
+    list[-1]['dropcount'] += 1
+    hb[int(c4)+11] = '🔲'
+
+def itemCraftingRem(thing, crafting, cou, *listSent): # Remove all resources used for crafting from inventroy
+    strrr = ['-1']
+    listSent = list(listSent)
+    for i in range(0,len(listSent)-1):
+        if crafting == 'pickaxe' and f'{thing}|{cou}' == 'wood|12' and i == int(cou): break
+        elif crafting == 'ironpick' and f'{thing}|{cou}' in ['wood|2', 'iron|3'] and i == int(cou): break # i have to verify both are done
+        i = listSent[i]
+        if i[0] == 'h':
+            pos = i[1:]
+            hotbar[int(pos)] = '🔲'
+            if strrr[0] == '-1': strrr[0] = f'h|{pos}'
+        if i[0] == 'i':
+            pos = i[1:]
+            inventory[int(pos)] = '🔲'
+            if strrr[0] == '-1': strrr[0] = f'i|{pos}'
+    return strrr[0]
+
+def updateInvItem(itemList, item): # Craft the item
+    idk = ['']
+    posListIron = itemList['🟣'][1].split('|')
+    posListWood = itemList['🟫'][1].split('|')
+    posListStone = itemList['🔳'][1].split('|')
+
+    match item:
+        case '🧮':
+            if (not (itemList['🔳'][0] >= 10) == True):
+                queueerror(f"Do not have enough items to craft a furnace.", f'Could not craft {item}')
+                return 'nomat'
+
+            tempVar1 = itemCraftingRem('stone', 'furnace', 10, *posListStone)
+            if tempVar1 != '-1': idk[0] = tempVar1
+            idk[0] = idk[0].split('|')
+
+        case '🔨':
+            if (not (itemList['🟣'][0] >= 3) == True) or (not (itemList['🟫'][0] >= 4) == True):
+                queueerror(f"Do not have enough items to craft a iron pickaxe.", f'Could not craft {item}')
+                return 'nomat'
+            
+            tempVar1 = itemCraftingRem('iron', 'ironpick', 3, *posListIron)
+            tempVar2 = itemCraftingRem('wood', 'ironpick', 2, *posListWood)
+            if tempVar1 != '-1': idk[0] = tempVar1
+            elif tempVar2 != '-1': idk[0] = tempVar2
+            idk[0] = idk[0].split('|')
+
+        case '⛏':
+            if (not (itemList['🟫'][0] >= 12) == True):
+                queueerror(f"Do not have enough items to craft a pickaxe.", f'Could not craft {item}')
+                return 'nomat'
+
+            tempVar2 = itemCraftingRem('wood', 'pickaxe', 12, *posListWood)
+            if tempVar2 != '-1': idk[0] = tempVar2
+            idk = idk[0].split('|')
+            print(idk)
+
+        case '🔪':
+            if (not (itemList['🟣'][0] >= 2) == True) or (not (itemList['🟫'][0] >= 4) == True):
+                queueerror(f"Do not have enough items to craft a sword", f'Could not craft {item}')
+                return 'nomat'
+
+            tempVar1 = itemCraftingRem('iron', 'sword', 2, *posListIron)
+            tempVar2 = itemCraftingRem('wood', 'sword', 4, *posListWood)
+            if tempVar1 != '-1': idk[0] = tempVar1
+            elif tempVar2 != '-1': idk[0] = tempVar2
+            idk[0] = idk[0].split('|')
+
+    # look its weird; im basically doing overcautious steps to get a accurate index to put pickaxe in
+    if idk[0] == 'h': hotbar[int(idk[1])] = item
+    if idk[0] == 'i': inventory[int(idk[1])] = item
 
 queueerror('Movement: w/a/s/d Place blocks(q) and Remove blocks(r), Move around in 3 different maps', 'Game is Ready!') # Sample run of queueerror()
+
+"""
+NOTE: Coded movement in and out of cave, no bugs - stable
+To add cave functionality, but add inventory mechanic and crafting first
+                                                            |--> started coding
+MAJOR bug: can pickup items even if hotbar full (goes to awkward spot in inv and overrides)
+"""
 
 # Movement loop
 while True:
@@ -165,6 +262,8 @@ while True:
     for i in range(len(errorList)-1,-1,-1): # Shit out all stored errors from previous loop iteration
         print(errorList[i], end='')
         errorList.pop()
+    print()
+    dynTerrain, dynBckp = terrainMapStorage[f't{currentTerrain}'], terrainMapStorage[f'b{currentTerrain}']
 
     """
     Basic principle is:
@@ -175,180 +274,224 @@ while True:
 
         As for placing/removing blocks, you check hotbar first for seeing if u can place anything or hotbar to check if u can pick it up
     """
-    print()
-    c = msvcrt.getwch()
+    c = msvcrt.getwch().lower()
 
-
-# --------------------------------------------------------------------------------------------------------------------------------------------
-    if currentTerrain == 0:
-        match c: # check for fw / bw / sideways and shift x and y coord correspondingly
-            case 'w':
-                if y == 0:
-                    TerrainOne[y][x], TerrainOne[5][x] = bckpT1[y][x], '👨'
-                    call = objEncounterCheck(TerrainOne, x, 5, hotbar, bckpT1)  
-                    if call == 'quit': break
-                    x, y = x, 5
-                else:
-                    TerrainOne[y][x], TerrainOne[y-1][x] = bckpT1[y][x], '👨'
-                    call = objEncounterCheck(TerrainOne, x, y-1, hotbar, bckpT1) 
-                    if call == 'quit': break
-                    x, y = x, y-1
-
-            case 's':
-                if y == 5:
-                    TerrainOne[y][x], TerrainOne[0][x] = bckpT1[y][x], '👨'
-                    call = objEncounterCheck(TerrainOne, x, 0, hotbar, bckpT1)
-                    if call == 'quit': break
-                    x, y = x, 0
-                else:
-                    TerrainOne[y][x], TerrainOne[y+1][x] = bckpT1[y][x], '👨'
-                    call = objEncounterCheck(TerrainOne, x, y+1, hotbar, bckpT1)
-                    if call == 'quit': break
-                    x, y = x, y+1
-
-            case 'a':
-                if x == 0:
-                    continue
-                else:
-                    TerrainOne[y][x], TerrainOne[y][x-1] = bckpT1[y][x], '👨'
-                    call = objEncounterCheck(TerrainOne, x-1, y, hotbar, bckpT1)
-                    if call == 'quit': break
-                    x, y = x-1, y
-
-            case 'd':
-                if x == 29:
-                    currentTerrain = 1
-                    TerrainOne[y][29], TerrainTwo[y][0] = bckpT1[y][29], '👨'
-                    call = objEncounterCheck(TerrainTwo, 0, y, hotbar, bckpT2)
-                    if call == 'quit': break
-                    x = 0
-                else:
-                    TerrainOne[y][x], TerrainOne[y][x+1] = bckpT1[y][x], '👨'
-                    call = objEncounterCheck(TerrainOne, x+1, y, hotbar, bckpT1)
-                    if call == 'quit': break
-                    x, y = x+1, y
-            
-            case 'x': #ignore
-                for i in inventory:
-                    print(i,end='')
+    if c == 'x': # Display inventory
+        prntSwch = 0
+        print('Inventory:      Crafting:\t\tMaterials:')
+        for i in range(0,len(inventory)):
+            prntSwch += 1
+            print(inventory[i],end='')
+            if prntSwch % 5 == 0:
+                match prntSwch:
+                    case 5:
+                        print('      🔨 - Iron Pickaxe     ' + '|| 3x 🟣 + 4x 🟫',end='')
+                    case 10:
+                        print('      🧮 - Furnace          ' + '|| 10x 🔲',end='')
+                    case 15:
+                        print('      🔪 - Sword            ' + '|| 2x 🟣 + 4x 🟫',end='')
+                    case 20:
+                        print('      ⛏  - Pickaxe          ' + '|| 12x 🟫',end='')
                 print()
 
-            case 'e': # Code to place blocks
-                d = 0
-                for i in hotbar[12:]:
-                    if i == '🟫': d+=1
-                if d == 0:
-                    queueerror('Need active place able blocks in hotbar.', 'Cannot do action')
-                else:
-                    for i in range(12,len(hotbar)):
-                        if hotbar[i] == '🟫':
-                            TerrainOne[y][x] = '🟫'
-                            if x == 29:
-                                TerrainOne[y][x], TerrainOne[y][x-1], bckpT1[y][x] = '🟫', '👨', '🟫'
-                                x, y = x-1, y
-                            else:
-                                TerrainOne[y][x], TerrainOne[y][x+1], bckpT1[y][x] = '🟫', '👨', '🟫'
-                                x, y = x+1, y
-                            hotbar[i] = '🔲'
+    elif c == 'r': break
+
+    elif c == '/': # Console - SWitch item / CRaft item / DRop items
+        print('>>> Select a quick action:' + textTemp)
+        cc = msvcrt.getwch()
+        match cc:
+            case '1': # Switch items code
+                print("      Select a item to switch: (Type the term)\n    > wood (🟫) (Wood)\n    > craft (📦) (Crafting Table)")
+                itemAsk = input().lower()
+                if itemAsk == 'wood': itemAsk = '🟫'
+                hasItem = False
+                for i in inventory:
+                    if i == itemAsk: hasItem = True
+                for i in hotbar[12:22]:
+                    if i == itemAsk: hasItem = True
+                if hasItem == False:
+                    queueerror('You don\'t have that item in your inventory.', 'Could not do action.')
+                    continue
+
+                print('Enter hotbar item to be replaced: (Number) || 1 2 3 4 5 6 7 8 || <- Order') 
+                c4 = msvcrt.getwch()
+                if c4.isdigit() == False or int(c4) > 9:
+                    queueerror('Can only accept number inputs in range 1-8', 'Cannot do action')
+                    continue
+
+                if hotbar[int(c4)+11] == '🔲': # Inventory to hotbar
+                    woodIndex = 0
+                    for i in inventory:
+                        if i == '🟫':
+                            woodIndex = inventory.index(i)
                             break
-                
-            case 'q': # Code to pickup a block placed by you
-                if bckpT1[y][x] not in placeableBlocks:
-                    queueerror('Can only pick up blocks placed by you.', 'Cannot do action')
-                else:
-                    if x == 29:
-                        TerrainOne[y][x-1], bckpT1[y][x], TerrainOne[y][x], x = '👨', '🟩', '🟩', x-1
-                    else:
-                        TerrainOne[y][x+1], bckpT1[y][x], TerrainOne[y][x], x = '👨', '🟩', '🟩', x+1
-                    for i in range(12,len(hotbar)):
-                        if hotbar[i] == '🔲':
-                            hotbar[i] = '🟫'
+                    else: woodIndex = -1
+                    if woodIndex == -1:
+                        queueerror(f'No wood in inventory to switch {itemAsk} from.', 'Could not do action')
+                        continue
+                    hotbar[int(c4)+11], inventory[woodIndex] = inventory[woodIndex], hotbar[int(c4)+11]
+
+                elif hotbar[int(c4)+11] == '🟫': # Hotbar to inventory
+                    spaceInv = 0
+                    for i in inventory:
+                        if i == '🔲':
+                            spaceInv = inventory.index(i)
                             break
-                    else:
-                        invModify('🟫', inventory)
+                    else: spaceInv = -1
+                    if spaceInv == -1:
+                        queueerror(f'No space in inventory to switch {itemAsk} to.', 'Could not do action')
+                        continue
+                    hotbar[int(c4)+11], inventory[spaceInv] = inventory[spaceInv], hotbar[int(c4)+11]
 
-            case 'r':
-                break
+            case '2': # Crafting code
+                print('      Choose an item to craft:\n     1. 🔨 - Iron Pickaxe       || 3x 🟣 + 4x 🟫\n     2. 🧮 - Furnace\t       || 10x 🔳\n     3. 🔪 - Sword\t        || 2x 🟣 + 4x 🟫\n     4. ⛏ - Pickaxe\t        || 12x 🟫',end='   Choose:')
+                itemAsk = msvcrt.getwch()
+                if itemAsk.isdigit() == False or int(itemAsk) not in [1,2,3,4]:
+                        queueerror('Can only accept number inputs in range 1-4', 'Command failed')
+                        continue
+                # [a,b,c] a is number of times that item was found, b is index, c is where (inv or hotbar)
+                foundItems = {'🟣':[0,''], '🟫':[0,''], '🔳':[0,'']}
 
+                for i in range(12,21): # check in hotbar
+                    xx = hotbar[i]
+                    if xx in foundItems:
+                        foundItems[xx][0] += 1
+                        foundItems[xx][1] += f'h{i}|'
+                for i in range(25): # check in invetory
+                    xx = inventory[i]
+                    if xx in foundItems:
+                        foundItems[xx][0] += 1
+                        foundItems[xx][1] += f'i{i}|' # i = found in inventory, h = found in hotbar, {i} is index
+                print()
 
-# movement to be modified to check if player enters cave
+                match itemAsk:
+                    case '1': # iron hamm- ahem pickaxe
+                        updateInvItem(foundItems, '🔨')
+
+                    case '2': # furnace
+                        updateInvItem(foundItems, '🧮')
+
+                    case '3': # sword
+                        updateInvItem(foundItems, '🔪')
+                    
+                    case '4': # normal pickaxe
+                        updateInvItem(foundItems, '⛏')
+
+                """
+                NOTE TO SELF: Coded crafting pickaxe; all log used bug fixed - nned to just code other items and stuff below
+                rest yet to be tested - also make mining
+                ofc no way to test rn
+                """
+
+            case '4': # Drop items code
+                    print('Enter hotbar item to be dropped: (Number) || 1 2 3 4 5 6 7 8 || <- Order') 
+                    c4 = msvcrt.getwch()
+                    if c4.isdigit() == False or int(c4) > 8:
+                        queueerror('Can only accept number inputs in range 1-8', 'Cannot do action')
+                    if hotbar[int(c4)+11] == '🔲':
+                        queueerror('Nothing in that hotbar slot to drop.', 'Cannot do action')
+                        continue
+                    queueerror('Dropped a item at that spot', f'Lost {hotbar[int(c4)+11]}')
+                    if currentTerrain == 0: dropItem(TerrainOne, hotbar) # TerrainOne[-1]['dropcount']+1
+                    elif currentTerrain == 1: dropItem(TerrainTwo, hotbar)
+                    elif currentTerrain == 2: dropItem(TerrainThree, hotbar)
+                    elif currentTerrain == 3: dropItem(CaveMap, hotbar)
+
+    
 # --------------------------------------------------------------------------------------------------------------------------------------------
-    elif currentTerrain == 1: # 2nd Biome
+    elif currentTerrain != 3: # Biome code for 0,1,2 as well as placing/removing blocks and entering cave
         match c:
             case 'w':
                 if y == 0:
-                    call = objEncounterCheck(TerrainTwo, x, 5, hotbar, bckpT2)
+                    call = objEncounterCheck(dynTerrain, x, 5, hotbar, dynBckp)  
                     if call == 'quit': break
-                    elif call == 'nomove': continue
+                    elif currentTerrain == 1 and call == 'nomove': continue
                     else:
-                        TerrainTwo[y][x], TerrainTwo[5][x] = bckpT2[y][x], '👨'
+                        dynTerrain[y][x], dynTerrain[5][x] = dynBckp[y][x], '👨'
                         x, y = x, 5
                 else:
-                    call = objEncounterCheck(TerrainTwo, x, y-1, hotbar, bckpT2) 
+                    call = objEncounterCheck(dynTerrain, x, y-1, hotbar, dynBckp) 
                     if call == 'quit': break
-                    elif call == 'nomove': continue
+                    elif currentTerrain == 1 and call == 'nomove': continue
                     else:
-                        TerrainTwo[y][x], TerrainTwo[y-1][x] = bckpT2[y][x], '👨'
+                        dynTerrain[y][x], dynTerrain[y-1][x] = dynBckp[y][x], '👨'
                         x, y = x, y-1
 
             case 's':
                 if y == 5:
-                    call = objEncounterCheck(TerrainTwo, x, 0, hotbar, bckpT2)
+                    call = objEncounterCheck(dynTerrain, x, 0, hotbar, dynBckp)
                     if call == 'quit': break
-                    elif call == 'nomove': continue
+                    elif currentTerrain == 1 and call == 'nomove': continue
                     else:
-                        TerrainTwo[y][x], TerrainTwo[0][x] = bckpT2[y][x], '👨'
+                        dynTerrain[y][x], dynTerrain[0][x] = dynBckp[y][x], '👨'
                         x, y = x, 0
                 else:
-                    call = objEncounterCheck(TerrainTwo, x, y+1, hotbar, bckpT2) 
-                    
+                    call = objEncounterCheck(dynTerrain, x, y+1, hotbar, dynBckp) 
                     if call == 'quit': break
-                    elif call == 'nomove': continue
+                    elif currentTerrain == 1 and call == 'nomove': continue
                     else:
-                        TerrainTwo[y][x], TerrainTwo[y+1][x] = bckpT2[y][x], '👨'
+                        dynTerrain[y][x], dynTerrain[y+1][x] = dynBckp[y][x], '👨'
                         x, y = x, y+1
 
             case 'a':
                 if x == 0:
-                    currentTerrain = 0
-                    TerrainTwo[y][x], TerrainOne[y][29] = bckpT2[y][x], '👨'
-                    call = objEncounterCheck(TerrainOne, 29, y, hotbar, bckpT1)
-                    if call == 'quit': break
-                    x, y = 29, y
+                    if currentTerrain != 0:
+                        dynTerrain[y][x] = dynBckp[y][x]
+                        currentTerrain -= 1
+                        terrainMapStorage[f't{currentTerrain}'][y][29] = '👨'
+                        call = objEncounterCheck(dynTerrain, 29, y, hotbar, dynBckp)
+                        if call == 'quit': break
+                        x, y = 29, y
+                    else:
+                        continue
                 else:
-                    call = objEncounterCheck(TerrainTwo, x-1, y, hotbar, bckpT2)
+                    call = objEncounterCheck(dynTerrain, x-1, y, hotbar, dynBckp)
                     if call == 'quit': break
-                    elif call == 'nomove': continue # Check if you moved into a spot occuiped by entrance to cave
-                    elif call == 'entercave':
+                    elif currentTerrain == 1 and call == 'nomove': continue # Check if you moved into a spot occuiped by entrance to cave
+                    elif currentTerrain == 1 and call == 'entercave':
                         currentTerrain = 3
-                        TerrainTwo[y][x] = bckpT2[y][x]
+                        dynTerrain[y][x] = dynBckp[y][x]
                         dxy += [x,y] # record position of cave entrance
                         CaveMap[1][0] = '👨'
                         x, y = 0, 1
                         continue
                     else:
-                        TerrainTwo[y][x], TerrainTwo[y][x-1] = bckpT2[y][x], '👨'
+                        dynTerrain[y][x], dynTerrain[y][x-1] = dynBckp[y][x], '👨'
                         x, y = x-1, y
 
             case 'd':
                 if x == 29:
-                    currentTerrain = 2
-                    TerrainTwo[y][29], TerrainThree[y][0] = bckpT2[y][29], '👨'
-                    call = objEncounterCheck(TerrainThree, 0, y, hotbar, bckpT3)
-                    if call == 'quit': break
-                    x = 0
-                else:
-                    call = objEncounterCheck(TerrainTwo, x+1, y, hotbar, bckpT2)
-                    if call == 'quit': break
-                    elif call == 'nomove': continue
+                    if currentTerrain != 2:
+                        dynTerrain[y][x] = dynBckp[y][x]
+                        currentTerrain += 1
+                        terrainMapStorage[f't{currentTerrain}'][y][0] = '👨'
+                        call = objEncounterCheck(dynTerrain, 0, y, hotbar, dynBckp)
+                        if call == 'quit': break
+                        x, y = 0, y
                     else:
-                        TerrainTwo[y][x], TerrainTwo[y][x+1] = bckpT2[y][x], '👨'
+                        continue
+                else:
+                    call = objEncounterCheck(dynTerrain, x+1, y, hotbar, dynBckp)
+                    if call == 'quit': break
+                    elif currentTerrain == 1 and call == 'nomove': continue # Check if you moved into a spot occuiped by entrance to cave
+                    else:
+                        dynTerrain[y][x], dynTerrain[y][x+1] = dynBckp[y][x], '👨'
                         x, y = x+1, y
-            
-            case 'x': #ignore
-                for i in inventory:
-                    print(i,end='')
-                print()
+    
+            case 'q':
+                if dynBckp[y][x] not in placeableBlocks:
+                    queueerror('Can only pick up blocks placed by you.', 'Cannot do action')
+                else:
+                    if x == 29:
+                        dynTerrain[y][x-1], dynBckp[y][x], dynTerrain[y][x], x = '👨', '🟩', '🟩', x-1
+                    else:
+                        dynTerrain[y][x+1], dynBckp[y][x], dynTerrain[y][x], x = '👨', '🟩', '🟩', x+1
+                    for i in range(12,len(hotbar)):
+                        if hotbar[i] == '🔲':
+                            hotbar[i] = '🟫'
+                            break
+                    else:
+                        invModify('🟫', inventory)
 
             case 'e':
                 d = 0
@@ -359,126 +502,15 @@ while True:
                 else:
                     for i in range(12,len(hotbar)):
                         if hotbar[i] == '🟫':
-                            TerrainTwo[y][x] = '🟫'
+                            dynTerrain[y][x] = '🟫'
                             if x == 29:
-                                TerrainTwo[y][x], TerrainTwo[y][x-1], bckpT2[y][x] = '🟫', '👨', '🟫'
+                                dynTerrain[y][x], dynTerrain[y][x-1], dynBckp[y][x] = '🟫', '👨', '🟫'
                                 x, y = x-1, y
                             else:
-                                TerrainTwo[y][x], TerrainTwo[y][x+1], bckpT2[y][x] = '🟫', '👨', '🟫'
+                                dynBckp[y][x], dynTerrain[y][x+1], dynBckp[y][x] = '🟫', '👨', '🟫'
                                 x, y = x+1, y
                             hotbar[i] = '🔲'
                             break
-                
-            case 'q':
-                if bckpT2[y][x] not in placeableBlocks:
-                    queueerror('Can only pick up blocks placed by you.', 'Cannot do action')
-                else:
-                    if x == 29:
-                        TerrainTwo[y][x-1], bckpT2[y][x], TerrainTwo[y][x], x = '👨', '🟩', '🟩', x-1
-                    else:
-                        TerrainTwo[y][x+1], bckpT2[y][x], TerrainTwo[y][x], x = '👨', '🟩', '🟩', x+1
-                    for i in range(12,len(hotbar)):
-                        if hotbar[i] == '🔲':
-                            hotbar[i] = '🟫'
-                            break
-                    else:
-                        invModify('🟫', inventory)
-
-            case 'r':
-                break
-
-
-# --------------------------------------------------------------------------------------------------------------------------------------------
-    elif currentTerrain == 2: # 3rd Biome
-        match c: 
-            case 'w':
-                if y == 0:
-                    TerrainThree[y][x], TerrainThree[5][x] = bckpT3[y][x], '👨'
-                    call = objEncounterCheck(TerrainThree, x, 5, hotbar, bckpT3)  
-                    if call == 'quit': break
-                    x, y = x, 5
-                else:
-                    TerrainThree[y][x], TerrainThree[y-1][x] = bckpT3[y][x], '👨'
-                    call = objEncounterCheck(TerrainThree, x, y-1, hotbar, bckpT3)
-                    if call == 'quit': break
-                    x, y = x, y-1
-
-            case 's':
-                if y == 5:
-                    TerrainThree[y][x], TerrainThree[0][x] = bckpT3[y][x], '👨'
-                    call = objEncounterCheck(TerrainThree, x, 0, hotbar, bckpT3)
-                    if call == 'quit': break
-                    x, y = x, 0
-                else:
-                    TerrainThree[y][x], TerrainThree[y+1][x] = bckpT3[y][x], '👨'
-                    call = objEncounterCheck(TerrainThree, x, y+1, hotbar, bckpT3)
-                    if call == 'quit': break
-                    x, y = x, y+1
-
-            case 'a':
-                if x == 0:
-                    currentTerrain = 1
-                    TerrainThree[y][x], TerrainTwo[y][29] = bckpT3[y][x], '👨'
-                    call = objEncounterCheck(TerrainTwo, 29, y, hotbar, bckpT2)
-                    if call == 'quit': break
-                    x, y = 29, y
-                else:
-                    TerrainThree[y][x], TerrainThree[y][x-1] = bckpT3[y][x], '👨'
-                    call = objEncounterCheck(TerrainThree, x-1, y, hotbar, bckpT3)
-                    if call == 'quit': break
-                    x, y = x-1, y
-
-            case 'd':
-                if x == 29:
-                    continue
-                else:
-                    TerrainThree[y][x], TerrainThree[y][x+1] = bckpT3[y][x], '👨'
-                    call = objEncounterCheck(TerrainThree, x+1, y, hotbar, bckpT3)
-                    if call == 'quit': break
-                    x, y = x+1, y
-            
-            case 'x': #ignore
-                for i in inventory:
-                    print(i,end='')
-                print()
-
-            case 'e':
-                d = 0
-                for i in hotbar[12:]:
-                    if i == '🟫': d+=1
-                if d == 0:
-                    queueerror('Need active place able blocks in hotbar.', 'Cannot do action')
-                else:
-                    for i in range(12,len(hotbar)):
-                        if hotbar[i] == '🟫':
-                            TerrainThree[y][x] = '🟫'
-                            if x == 29:
-                                TerrainThree[y][x], TerrainThree[y][x-1], bckpT3[y][x] = '🟫', '👨', '🟫'
-                                x, y = x-1, y
-                            else:
-                                TerrainThree[y][x], TerrainThree[y][x+1], bckpT3[y][x] = '🟫', '👨', '🟫'
-                                x, y = x+1, y
-                            hotbar[i] = '🔲'
-                            break
-                
-            case 'q':
-                if bckpT3[y][x] not in placeableBlocks:
-                    queueerror('Can only pick up blocks placed by you.', 'Cannot do action')
-                else:
-                    if x == 29:
-                        TerrainThree[y][x-1], bckpT3[y][x], TerrainThree[y][x], x = '👨', '🟩', '🟩', x-1
-                    else:
-                        TerrainThree[y][x+1], bckpT3[y][x], TerrainThree[y][x], x = '👨', '🟩', '🟩', x+1
-                    for i in range(12,len(hotbar)):
-                        if hotbar[i] == '🔲':
-                            hotbar[i] = '🟫'
-                            break
-                    else:
-                        invModify('🟫', inventory)
-
-            case 'r':
-                break
-
 
 # --------------------------------------------------------------------------------------------------------------------------------------------
     elif currentTerrain == 3: # Cave
@@ -537,11 +569,3 @@ while True:
                     else:
                         CaveMap[y][x], CaveMap[y][x-1] = '  ', '👨'
                         x, y = x-1, y
-
-            case 'r':
-                break
-
-        """
-        NOTE: Coded movement in and out of cave, no bugs - stable
-        To add cave functionality, but add inventory mechanic and crafting first
-        """
