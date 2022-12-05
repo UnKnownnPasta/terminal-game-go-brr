@@ -412,7 +412,7 @@ while True:
 
     
 # --------------------------------------------------------------------------------------------------------------------------------------------
-    elif currentTerrain != 3: 
+    elif currentTerrain != 3: # Biome code for 0,1,2 as well as placing/removing blocks and entering cave
         match c:
             case 'w':
                 if y == 0:
@@ -495,6 +495,11 @@ while True:
                 if dynBckp[y][x] not in placeableBlocks:
                     queueerror('Can only pick up blocks placed by you.', 'Cannot do action')
                 else:
+                    try: 
+                        tX = hotbar.index('🔲')
+                        if tX not in range(12,21):
+                            inventory.index('🔲')
+                    except ValueError: queueerror('No space in inventory to store blocks', 'Cannot do action.'); continue
                     if x == 29:
                         dynTerrain[y][x-1], dynBckp[y][x], dynTerrain[y][x], x = '👨', '🟩', '🟩', x-1
                     else:
