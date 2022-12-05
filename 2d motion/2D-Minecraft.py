@@ -54,9 +54,7 @@ for j in range(8): # Cave map gen
         if j%2 == 0:
             percent = randint(1,100)
             if percent > 70:
-                ns.append('🔲')
-            elif percent in range(30,70):
-                ns.append('⬜')
+                ns.append('🔘')
             else:
                 ns.append('🟪')
         else:
@@ -66,7 +64,7 @@ for j in range(8): # Cave map gen
                 ns.append('  ')
     CaveMap.append(ns)
 
-CaveMap[1][29] = CaveMap[3][29] = CaveMap[3][0] = CaveMap[5][0] = '⬜'
+CaveMap[1][29] = CaveMap[3][29] = CaveMap[3][0] = CaveMap[5][0] = '🔘'
 CaveMap[2][28] = CaveMap[4][1] = '  ' # fixing walls
 
 TerrainOne += ['T-0', {'dropcount':0}]
@@ -90,8 +88,8 @@ textTemp = """ Type a number
 import msvcrt
 TerrainOne[0][0] = '👨'
 x, y = 0, 0
-currentTerrain, errorList, placeableBlocks, noMoveBlocks = 0, [], ['🟫'], ['⬜', '🟪', '🔲']
-
+currentTerrain, errorList, placeableBlocks, noMoveBlocks = 0, [], ['🟫', '🧮'], ['🔘', '🟪']
+obtainableItems = ['stone|🔘', 'wood|🟫', 'craft|💠', 'furnace|🧮', 'iron|🟪']
 terrainMapStorage = {
     't0': TerrainOne, 'b0': bckpT1,
     't1': TerrainTwo, 'b1': bckpT2,
@@ -178,7 +176,9 @@ def itemCraftingRem(thing, crafting, cou, *listSent): # Remove all resources use
     listSent = list(listSent)
     for i in range(0,len(listSent)-1):
         if crafting == 'pickaxe' and f'{thing}|{cou}' == 'wood|12' and i == int(cou): break
-        elif crafting == 'ironpick' and f'{thing}|{cou}' in ['wood|2', 'iron|3'] and i == int(cou): break # i have to verify both are done
+        elif crafting == 'furnace' and f'{thing}|{cou}' == 'stone|10' and i == int(cou): break
+        elif crafting == 'craft' and f'{thing}|{cou}' == 'wood|6' and i == int(cou): break
+        elif crafting == 'ironpick' and f'{thing}|{cou}' in ['wood|2', 'iron|3'] and i == int(cou): break # i have to verify both are done, doesnt work 
         i = listSent[i]
         if i[0] == 'h':
             pos = i[1:]
@@ -194,17 +194,17 @@ def updateInvItem(itemList, item): # Craft the item
     idk = ['']
     posListIron = itemList['🟣'][1].split('|')
     posListWood = itemList['🟫'][1].split('|')
-    posListStone = itemList['🔳'][1].split('|')
+    posListStone = itemList['🔘'][1].split('|')
 
     match item:
         case '🧮':
-            if (not (itemList['🔳'][0] >= 10) == True):
+            if (not (itemList['🔘'][0] >= 10) == True):
                 queueerror(f"Do not have enough items to craft a furnace.", f'Could not craft {item}')
                 return 'nomat'
 
             tempVar1 = itemCraftingRem('stone', 'furnace', 10, *posListStone)
             if tempVar1 != '-1': idk[0] = tempVar1
-            idk[0] = idk[0].split('|')
+            idk = idk[0].split('|')
 
         case '🔨':
             if (not (itemList['🟣'][0] >= 3) == True) or (not (itemList['🟫'][0] >= 4) == True):
@@ -215,7 +215,7 @@ def updateInvItem(itemList, item): # Craft the item
             tempVar2 = itemCraftingRem('wood', 'ironpick', 2, *posListWood)
             if tempVar1 != '-1': idk[0] = tempVar1
             elif tempVar2 != '-1': idk[0] = tempVar2
-            idk[0] = idk[0].split('|')
+            idk = idk[0].split('|')
 
         case '⛏':
             if (not (itemList['🟫'][0] >= 12) == True):
@@ -225,7 +225,6 @@ def updateInvItem(itemList, item): # Craft the item
             tempVar2 = itemCraftingRem('wood', 'pickaxe', 12, *posListWood)
             if tempVar2 != '-1': idk[0] = tempVar2
             idk = idk[0].split('|')
-            print(idk)
 
         case '🔪':
             if (not (itemList['🟣'][0] >= 2) == True) or (not (itemList['🟫'][0] >= 4) == True):
@@ -236,23 +235,36 @@ def updateInvItem(itemList, item): # Craft the item
             tempVar2 = itemCraftingRem('wood', 'sword', 4, *posListWood)
             if tempVar1 != '-1': idk[0] = tempVar1
             elif tempVar2 != '-1': idk[0] = tempVar2
-            idk[0] = idk[0].split('|')
+            idk = idk[0].split('|')
+
+        case '📦':
+            if (not (itemList['🟫'][0] >= 6) == True):
+                queueerror(f"Do not have enough items to craft a crafting table", f'Could not craft {item}')
+                return 'nomat'
+
+            tempVar1 = itemCraftingRem('wood', 'craft', 6, *posListWood)
+            if tempVar1 != '-1': idk[0] = tempVar1
+            idk = idk[0].split('|')
 
     # look its weird; im basically doing overcautious steps to get a accurate index to put pickaxe in
     if idk[0] == 'h': hotbar[int(idk[1])] = item
     if idk[0] == 'i': inventory[int(idk[1])] = item
 
-queueerror('Movement: w/a/s/d Place blocks(q) and Remove blocks(r), Move around in 3 different maps', 'Game is Ready!') # Sample run of queueerror()
+def mineBlock(cavelist, inve, x, y): # Picking up blocks placed on the map
+    toMine = cavelist[y-1][x]
+    if toMine in ['🟫', '  ', '⬛']: return 'cantmine'
+    emptIndex = -1
+    if '🔲' in inve: emptIndex = inve.index('🔲')
+    if emptIndex == -1: return 'nomine'
+    inve[emptIndex] = toMine
+    cavelist[y-1][x] = '  '
+    return 'mined'
 
-"""
-NOTE: Coded movement in and out of cave, no bugs - stable
-To add cave functionality, but add inventory mechanic and crafting first
-                                                            |--> started coding
-MAJOR bug: can pickup items even if hotbar full (goes to awkward spot in inv and overrides)
-"""
+queueerror('Movement: w/a/s/d Place blocks(q), Remove blocks(r), Mine blocks (f), / To access more options; Move around in 3 different maps - build anywhere!', 'Game is Ready!') # Sample run of queueerror()
 
 # Movement loop
 while True:
+    print()
     if currentTerrain == 0: mapLog(TerrainOne)
     elif currentTerrain == 1: mapLog(TerrainTwo)
     elif currentTerrain == 2: mapLog(TerrainThree)
@@ -287,13 +299,14 @@ while True:
                     case 5:
                         print('      🔨 - Iron Pickaxe     ' + '|| 3x 🟣 + 4x 🟫',end='')
                     case 10:
-                        print('      🧮 - Furnace          ' + '|| 10x 🔲',end='')
+                        print('      🧮 - Furnace          ' + '|| 10x 🔘',end='')
                     case 15:
                         print('      🔪 - Sword            ' + '|| 2x 🟣 + 4x 🟫',end='')
                     case 20:
                         print('      ⛏  - Pickaxe          ' + '|| 12x 🟫',end='')
-                print()
-
+                if i == len(inventory)-1: pass
+                else: print()
+        
     elif c == 'r': break
 
     elif c == '/': # Console - SWitch item / CRaft item / DRop items
@@ -301,56 +314,52 @@ while True:
         cc = msvcrt.getwch()
         match cc:
             case '1': # Switch items code
-                print("      Select a item to switch: (Type the term)\n    > wood (🟫) (Wood)\n    > craft (📦) (Crafting Table)")
-                itemAsk = input().lower()
-                if itemAsk == 'wood': itemAsk = '🟫'
-                hasItem = False
-                for i in inventory:
-                    if i == itemAsk: hasItem = True
-                for i in hotbar[12:22]:
-                    if i == itemAsk: hasItem = True
-                if hasItem == False:
-                    queueerror('You don\'t have that item in your inventory.', 'Could not do action.')
-                    continue
+                print("      Select a item to switch: (Type the term)\n    > wood (🟫)\n    > craft (💠)\n    > furnace (🧮)\n    > iron (🟪)\n    > stone (🔘)")
+                itemAsk = input().lower() # ['stone|🔘', 'wood|🟫', 'craft|💠', 'furnace|🧮', 'iron|🟪']
+                for i in obtainableItems:
+                    if i[:-2] == itemAsk:
+                        itemAsk = i[-1]
+                        break
+                else:
+                    queueerror('Invalid item given to switch', 'Could not switch'); continue
 
-                print('Enter hotbar item to be replaced: (Number) || 1 2 3 4 5 6 7 8 || <- Order') 
-                c4 = msvcrt.getwch()
-                if c4.isdigit() == False or int(c4) > 9:
-                    queueerror('Can only accept number inputs in range 1-8', 'Cannot do action')
-                    continue
+                itemFound = [-1, False]
+                try: # check if its in hotbar
+                    temp = hotbar.index(itemAsk)
+                    itemFound[0], itemFound[1] = temp, True
+                except ValueError:
+                    pass
 
-                if hotbar[int(c4)+11] == '🔲': # Inventory to hotbar
-                    woodIndex = 0
-                    for i in inventory:
-                        if i == '🟫':
-                            woodIndex = inventory.index(i)
-                            break
-                    else: woodIndex = -1
-                    if woodIndex == -1:
-                        queueerror(f'No wood in inventory to switch {itemAsk} from.', 'Could not do action')
-                        continue
-                    hotbar[int(c4)+11], inventory[woodIndex] = inventory[woodIndex], hotbar[int(c4)+11]
+                if itemFound[1] == False: # not in hotbar, switch to hotbar
+                    try:
+                        temp = inventory.index(itemAsk)
+                        print('Select a hotbar slot to modify: [Choose from 1 to 9]')
+                        cPlace = msvcrt.getwch()
+                        if cPlace.isdigit() == False:
+                            queueerror('Hotbar slot should be a valid number in range 1 to 9 inclusive of both', 'Could not do action'); continue
+                        if int(cPlace) not in range(1,10):
+                            queueerror('Hotbar slot should be a valid number in range 1 to 9 inclusive of both', 'Could not do action'); continue
 
-                elif hotbar[int(c4)+11] == '🟫': # Hotbar to inventory
-                    spaceInv = 0
-                    for i in inventory:
-                        if i == '🔲':
-                            spaceInv = inventory.index(i)
-                            break
-                    else: spaceInv = -1
-                    if spaceInv == -1:
-                        queueerror(f'No space in inventory to switch {itemAsk} to.', 'Could not do action')
-                        continue
-                    hotbar[int(c4)+11], inventory[spaceInv] = inventory[spaceInv], hotbar[int(c4)+11]
+                        if cPlace == itemAsk: # item already was there, command rejected
+                            queueerror(f'{itemAsk} already exists at position {cPlace} in the hotbar.', 'Could not do action'); continue
+                        inventory[temp], hotbar[int(cPlace)+11] = hotbar[int(cPlace)+11], inventory[temp]
+                    except ValueError:
+                        queueerror('Item not found in inventory or hotbar', 'Could not do action'); continue
+                else:
+                    try:
+                        empSpace = inventory.index('🔲')
+                        inventory[empSpace], hotbar[itemFound[0]] = hotbar[itemFound[0]], inventory[empSpace]
+                    except ValueError:
+                        queueerror('No free space in inventory to switch item to', 'Could not do action')
 
             case '2': # Crafting code
-                print('      Choose an item to craft:\n     1. 🔨 - Iron Pickaxe       || 3x 🟣 + 4x 🟫\n     2. 🧮 - Furnace\t       || 10x 🔳\n     3. 🔪 - Sword\t        || 2x 🟣 + 4x 🟫\n     4. ⛏ - Pickaxe\t        || 12x 🟫',end='   Choose:')
+                print('      Choose an item to craft:\n     1. 🔨 - Iron Pickaxe       || 3x 🟣 + 4x 🟫\n     2. 🧮 - Furnace\t       || 10x 🔘\n     3. 🔪 - Sword\t        || 2x 🟣 + 4x 🟫\n     4. ⛏ - Pickaxe\t        || 12x 🟫\n     5. 📦 - Crafting Table\t|| 6x 🟫',end='   Choose:')
                 itemAsk = msvcrt.getwch()
-                if itemAsk.isdigit() == False or int(itemAsk) not in [1,2,3,4]:
+                if itemAsk.isdigit() == False or int(itemAsk) not in range(1,6):
                         queueerror('Can only accept number inputs in range 1-4', 'Command failed')
                         continue
                 # [a,b,c] a is number of times that item was found, b is index, c is where (inv or hotbar)
-                foundItems = {'🟣':[0,''], '🟫':[0,''], '🔳':[0,'']}
+                foundItems = {'🟣':[0,''], '🟫':[0,''], '🔘':[0,'']}
 
                 for i in range(12,21): # check in hotbar
                     xx = hotbar[i]
@@ -377,6 +386,9 @@ while True:
                     case '4': # normal pickaxe
                         updateInvItem(foundItems, '⛏')
 
+                    case '5': # crafting
+                        updateInvItem(foundItems, '📦')
+
                 """
                 NOTE TO SELF: Coded crafting pickaxe; all log used bug fixed - nned to just code other items and stuff below
                 rest yet to be tested - also make mining
@@ -386,8 +398,9 @@ while True:
             case '4': # Drop items code
                     print('Enter hotbar item to be dropped: (Number) || 1 2 3 4 5 6 7 8 || <- Order') 
                     c4 = msvcrt.getwch()
-                    if c4.isdigit() == False or int(c4) > 8:
+                    if c4.isdigit() == False or (int(c4) > 8):
                         queueerror('Can only accept number inputs in range 1-8', 'Cannot do action')
+                        continue
                     if hotbar[int(c4)+11] == '🔲':
                         queueerror('Nothing in that hotbar slot to drop.', 'Cannot do action')
                         continue
@@ -399,7 +412,7 @@ while True:
 
     
 # --------------------------------------------------------------------------------------------------------------------------------------------
-    elif currentTerrain != 3: # Biome code for 0,1,2 as well as placing/removing blocks and entering cave
+    elif currentTerrain != 3: 
         match c:
             case 'w':
                 if y == 0:
@@ -494,29 +507,33 @@ while True:
                         invModify('🟫', inventory)
 
             case 'e':
-                d = 0
-                for i in hotbar[12:]:
-                    if i == '🟫': d+=1
-                if d == 0:
-                    queueerror('Need active place able blocks in hotbar.', 'Cannot do action')
-                else:
-                    for i in range(12,len(hotbar)):
-                        if hotbar[i] == '🟫':
-                            dynTerrain[y][x] = '🟫'
-                            if x == 29:
-                                dynTerrain[y][x], dynTerrain[y][x-1], dynBckp[y][x] = '🟫', '👨', '🟫'
-                                x, y = x-1, y
-                            else:
-                                dynBckp[y][x], dynTerrain[y][x+1], dynBckp[y][x] = '🟫', '👨', '🟫'
-                                x, y = x+1, y
-                            hotbar[i] = '🔲'
-                            break
+                print("  [1] 🟫 - Wood\n  [2] 🧮 - Furnace\n  [3] 📦 - Crafting Table\nChoose a item to place (number):",end='')
+                stuff = ['🟫', '🧮', '📦']
+                placing = msvcrt.getwch()
+                if placing.isdigit() == False: queueerror('Invalid selection', 'Could not do action'); continue
+                elif int(placing) > 3: queueerror(f'Given option is not a valid choice [Entered: {placing}]', 'Error'); continue
+
+                if (stuff[int(placing)-1] in hotbar[12:21]) == False:
+                    queueerror(f'Do not have any {stuff[int(placing)-1]} in hotbar to place', 'Cannot do action'); continue
+
+                for i in range(12,len(hotbar)):
+                    if hotbar[i] == stuff[int(placing)-1]:
+                        dynTerrain[y][x] = stuff[int(placing)-1]
+                        if x == 29:
+                            dynTerrain[y][x], dynTerrain[y][x-1], dynBckp[y][x] = stuff[int(placing)-1], '👨', stuff[int(placing)-1]
+                            x, y = x-1, y
+                        else:
+                            dynBckp[y][x], dynTerrain[y][x+1], dynBckp[y][x] = stuff[int(placing)-1], '👨', stuff[int(placing)-1]
+                            x, y = x+1, y
+                        hotbar[i] = '🔲'
+                        break
 
 # --------------------------------------------------------------------------------------------------------------------------------------------
     elif currentTerrain == 3: # Cave
-
         match c:
             case 'w':
+                if y == 0:
+                    continue
                 if CaveMap[y-1][x] in noMoveBlocks:
                     continue
                 else:
@@ -524,6 +541,8 @@ while True:
                     x, y = x, y-1
 
             case 's':
+                if y == 5:
+                    continue
                 if CaveMap[y+1][x] in noMoveBlocks:
                     continue
                 else:
@@ -544,7 +563,9 @@ while True:
                             CaveMap[y][x], CaveMap[y][x+1] = '  ', '👨'
                             x, y = x+1, y
                 else:
-                    if CaveMap[y][x+1] in noMoveBlocks:
+                    if x == 29:
+                        continue
+                    elif CaveMap[y][x+1] in noMoveBlocks:
                         continue
                     else:
                         CaveMap[y][x], CaveMap[y][x+1] = '  ', '👨'
@@ -564,8 +585,25 @@ while True:
                             CaveMap[y][x], CaveMap[y][x-1] = '  ', '👨'
                             x, y = x-1, y   
                 else:
+                    if x == 0:
+                        continue
                     if CaveMap[y][x-1] in noMoveBlocks:
                         continue
                     else:
                         CaveMap[y][x], CaveMap[y][x-1] = '  ', '👨'
                         x, y = x-1, y
+
+            case 'f':
+                if '⛏' not in hotbar[12:21] == False:
+                    queueerror('Need a pickaxe to mine blocks', 'Cannot mine')
+                    continue
+                elif '🔨' not in hotbar[12:21] == False:
+                    queueerror('Need a pickaxe to mine blocks', 'Cannot mine')
+                    continue
+                call = mineBlock(CaveMap, inventory, x, y)
+                if call == 'cantmine':
+                    queueerror('Not a valid block to mine with pickaxe', 'Cannot mine')
+                    continue
+                if call == 'nomine':
+                    queueerror('No free space in invetory to put items in', 'Cannot mine')
+                    continue
