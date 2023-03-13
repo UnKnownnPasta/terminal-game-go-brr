@@ -26,6 +26,8 @@ actual fucking logic in the game
 # Creating Terrain
 from copy import deepcopy
 from random import randint
+import pickle
+import subprocess
 
 # This is where the lists for terrain is prepared
 TerrainOne, TerrainTwo, TerrainThree, CaveMap = ([] for i in range(4)) # Unpack three uninitialized lists
@@ -48,7 +50,7 @@ for i in range(3):
         if i == 1: TerrainTwo.append(ns)
         if i == 2: TerrainThree.append(ns)
 
-for j in range(8): # Cave map gen
+for j in range(7): # Cave map gen
     ns = []
     for k in range(30):
         if j%2 == 0:
@@ -113,10 +115,17 @@ dx, dy, dxy = randint(14,18), randint(1,3), []
 createCave(dx, dy, TerrainTwo, bckpT2)
 
 def mapLog(listType): # Print the current map
-    for i in range(0,len(listType)-2):
-        for j in listType[i]:
-            print(j,end='')
-        print()
+    # for i in range(0,len(listType)-2):
+    #     for j in listType[i]:
+    #         print(j,end='')
+    #     print()
+    with open('2DMC/terrain.pkl', 'wb') as f:
+        pickle.dump(TerrainOne, f)
+        pickle.dump(TerrainTwo, f)
+        pickle.dump(TerrainThree, f)
+        pickle.dump(CaveMap, f)
+    
+    subprocess.run(['python', 'guidisplay.py'])
 
 def hbLog(listType): # Print the hearts + hotbar
     for i in listType:
@@ -261,6 +270,22 @@ def mineBlock(cavelist, inve, x, y): # Picking up blocks placed on the map
     return 'mined'
 
 queueerror('Movement: w/a/s/d Place blocks(q), Remove blocks(r), Mine blocks (f), / To access more options; Move around in 3 different maps - build anywhere!', 'Game is Ready!') # Sample run of queueerror()
+
+"""
+NOTE: Coded movement in and out of cave, no bugs - stable
+To add cave functionality, but add inventory mechanic and crafting first
+                |--> Added crafting, added mining, added tools, added making/placing crafting table/furnace, cave is partially ready
+
+Now starting adding cave features
+|----> custom blocks
+    -> lava damage
+    -> water extinguish
+    -> obsidian
+    -> keys to mine up/down
+    -> jumping over obbi
+    -> random damage, torch, ores
+-----|
+"""
 
 # Movement loop
 while True:
@@ -542,8 +567,12 @@ while True:
                 if CaveMap[y-1][x] in noMoveBlocks:
                     continue
                 else:
-                    CaveMap[y][x], CaveMap[y-1][x] = '  ', '👨'
-                    x, y = x, y-1
+                    call = objEncounterCheck(dynTerrain, x, y, hotbar, dynBckp)
+                    if call == 'quit': break
+                    elif call == 'nomove': continue
+                    else:
+                        CaveMap[y][x], CaveMap[y-1][x] = '  ', '👨'
+                        x, y = x, y-1
 
             case 's':
                 if y == 5:
@@ -551,8 +580,12 @@ while True:
                 if CaveMap[y+1][x] in noMoveBlocks:
                     continue
                 else:
-                    CaveMap[y][x], CaveMap[y+1][x] = '  ', '👨'
-                    x, y = x, y+1
+                    call = objEncounterCheck(dynTerrain, x, y, hotbar, dynBckp)
+                    if call == 'quit': break
+                    elif call == 'nomove': continue
+                    else:
+                        CaveMap[y][x], CaveMap[y+1][x] = '  ', '👨'
+                        x, y = x, y+1
 
             case 'd':
                 if y == 5:
@@ -573,8 +606,12 @@ while True:
                     elif CaveMap[y][x+1] in noMoveBlocks:
                         continue
                     else:
-                        CaveMap[y][x], CaveMap[y][x+1] = '  ', '👨'
-                        x, y = x+1, y
+                        call = objEncounterCheck(CaveMap, 29, y, hotbar, CaveMap)
+                        if call == 'quit': break
+                        elif call == 'nomove': continue
+                        else:
+                            CaveMap[y][x], CaveMap[y][x+1] = '  ', '👨'
+                            x, y = x+1, y
 
             case 'a':
                 if y == 1:
@@ -587,28 +624,29 @@ while True:
                         if CaveMap[y][x-1] in noMoveBlocks:
                             continue
                         else:
+                            objEncounterCheck(CaveMap, x, y, hotbar, CaveMap)
                             CaveMap[y][x], CaveMap[y][x-1] = '  ', '👨'
-                            x, y = x-1, y   
+                            x, y = x-1, y
                 else:
                     if x == 0:
                         continue
                     if CaveMap[y][x-1] in noMoveBlocks:
                         continue
                     else:
-                        CaveMap[y][x], CaveMap[y][x-1] = '  ', '👨'
-                        x, y = x-1, y
+                        call = objEncounterCheck(CaveMap, x, y, hotbar, CaveMap)
+                        if call == 'quit': break
+                        elif call == 'nomove': continue
+                        else:
+                            CaveMap[y][x], CaveMap[y][x-1] = '  ', '👨'
+                            x, y = x-1, y
 
             case 'f':
-                if '⛏' not in hotbar[12:21] == False:
-                    queueerror('Need a pickaxe to mine blocks', 'Cannot mine')
-                    continue
-                elif '🔨' not in hotbar[12:21] == False:
-                    queueerror('Need a pickaxe to mine blocks', 'Cannot mine')
-                    continue
+                hbb = str(hotbar[12:21])
+                if hbb.find('⛏') == -1 and hbb.find('🔨') == -1:
+                    queueerror('Need a pickaxe to mine blocks', 'Cannot mine'); continue
+                
                 call = mineBlock(CaveMap, inventory, x, y)
                 if call == 'cantmine':
-                    queueerror('Not a valid block to mine with pickaxe', 'Cannot mine')
-                    continue
+                    queueerror('Not a valid block to mine with pickaxe', 'Cannot mine'); continue
                 if call == 'nomine':
-                    queueerror('No free space in invetory to put items in', 'Cannot mine')
-                    continue
+                    queueerror('No free space in invetory to put items in', 'Cannot mine'); continue
